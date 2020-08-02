@@ -29,8 +29,8 @@ private:
 	TArray<FString>		CommandArray;
 	int	Port= 10101;
 	int	IPv= 4;
-	TAtomic<bool>		bStopFlag= false;
-	TAtomic<bool>		bRecvCommand= false;
+	TAtomic<bool>		bStopFlag{ false };
+	TAtomic<bool>		bRecvCommand{ false };
 
 private:
 
