@@ -4,7 +4,7 @@
 	"Version" : 1,
 	"VersionName" : "1.0",
 	"CreatedBy" : "flatlib",
-	"CreatedByURL" : "none",
+	"CreatedByURL" : "https://github.com/hiroog/RemoteConsole2",
 	"CanContainContent" : false,
 	"Description" : "Remote Console Command2",
 	"Category" : "flatlib",

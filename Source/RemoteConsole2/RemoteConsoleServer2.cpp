@@ -49,18 +49,15 @@ void	FRemoteConsoleServer2::RecvAll( FSocket* socket, uint8* buffer, int32 data_
 uint32	FRemoteConsoleServer2::Run()
 {
 	//UE_LOG( LogTemp, Log, TEXT( "FRemoteConsoleServer2:Run()" ) );
-	FIPv4Address	server_addr;
-	FIPv4Address::Parse( TEXT("0.0.0.0"), server_addr );
+	FIPv4Endpoint	endpoint( FIPv4Address::Any, Port );
+//	FIPv6Endpoint	endpoint6( FIPv6Address::Any, Port );
 
-	FIPv4Endpoint	endpoint( server_addr, Port );
-
-	int32		buffer_size= 1024*2;
+	const int32	buffer_size= 1024*2;
 	FSocket*	listen_sock= FTcpSocketBuilder( TEXT("listen") )
-					.AsReusable()
 					.BoundToEndpoint( endpoint )
-					.WithReceiveBufferSize( buffer_size );
-	listen_sock->SetReceiveBufferSize( buffer_size, buffer_size );
-	listen_sock->SetSendBufferSize( buffer_size, buffer_size );
+					.AsReusable()
+					.WithReceiveBufferSize( buffer_size )
+					.WithSendBufferSize( buffer_size );
 	listen_sock->Listen(1);
 
 	for(; !bStopFlag ;){
