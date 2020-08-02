@@ -1,0 +1,18 @@
+{
+	"FileVersion" : 3,
+	"FriendlyName" : "RemoteConsole2",
+	"Version" : 1,
+	"VersionName" : "1.0",
+	"CreatedBy" : "flatlib",
+	"CreatedByURL" : "none",
+	"CanContainContent" : false,
+	"Description" : "Remote Console Command2",
+	"Category" : "flatlib",
+	"Modules" :
+	[
+		{
+			"Name" : "RemoteConsole2",
+			"Type" : "Runtime"
+		}
+	]
+}
