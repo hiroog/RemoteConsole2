@@ -88,7 +88,7 @@ class ConnectionSocket:
 
 
 def usage():
-    print( 'SendCommand v1.01 Hiroyuki Ogasawara' )
+    print( 'SendCommand v1.02 Hiroyuki Ogasawara' )
     print( 'usage: SendCommand [<options>] <cmd>...' )
     print( '  -4         use ipv4' )
     print( '  -6         use ipv6' )

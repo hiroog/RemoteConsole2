@@ -13,7 +13,7 @@ import SendCommandLine
 class SendCommandGUI:
 
     APP_NAME= 'SendCommandGUI.py'
-    VERSION= 'v1.01'
+    VERSION= 'v1.02'
     CONFIG_FILENAME= 'send_command_option.txt'
 
     def __init__( self, config_path ):
@@ -35,6 +35,7 @@ class SendCommandGUI:
                 self.host,
                 self.port,
                 self.ipv6,
+                self.htype,
                 self.command,
             ]
         self.config_file= os.path.join( config_path, self.CONFIG_FILENAME )
