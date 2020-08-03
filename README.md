@@ -24,4 +24,4 @@ Console 出力の確認は IDE や logcat など SDK 標準のツールを使用
 ## configuration
 
 Server の Port 番号は 10101 です。
-RemoteConsole2/Source/RemoteConsole2/RemoteConsoleServer2.h の Port で変更できます。
+RemoteConsole2/Source/RemoteConsole2/RemoteDevice.cpp の StartServer の引数で変更できます。

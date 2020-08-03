@@ -12,7 +12,8 @@
 	[
 		{
 			"Name" : "RemoteConsole2",
-			"Type" : "Runtime"
+			"Type" : "Runtime",
+			"LoadingPhase" : "PostConfigInit"
 		}
 	]
 }

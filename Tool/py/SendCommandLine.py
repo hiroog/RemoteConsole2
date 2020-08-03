@@ -73,9 +73,12 @@ class ConnectionSocket:
                 raise   SCC_Error( 'socket closed' )
             sent_size+= size
 
-    def sendCommand( self, command ):
+    def sendCommand( self, command, htype ):
         binary= command.encode( 'utf-8' )
-        header_binary= struct.pack( '<HBB', 0x7083, 2, len(binary) )
+        if htype == 0:
+            header_binary= struct.pack( '<HBB', 0x7083, 2, len(binary) )
+        else:
+            header_binary= struct.pack( '<IHHII', 0x70198fb3, 257, 0, len(binary), 0 )
         self.sendBinary( header_binary + binary )
 
     def close( self ):
@@ -85,12 +88,13 @@ class ConnectionSocket:
 
 
 def usage():
-    print( 'SendCommand v1.00 Hiroyuki Ogasawara' )
+    print( 'SendCommand v1.01 Hiroyuki Ogasawara' )
     print( 'usage: SendCommand [<options>] <cmd>...' )
     print( '  -4         use ipv4' )
     print( '  -6         use ipv6' )
     print( '  -p <port>  port (default 10101)' )
     print( '  -h <host>  host (default localhost)' )
+    print( '  -t <type>  header type (default 0)' )
     print( 'ex. SendCommand -h 192.168.0.10 stat fps' )
     print( 'ex. SendCommand -6 stat unit' )
     sys.exit( 0 )
@@ -102,6 +106,7 @@ def main( argv ):
     command= None
     host= 'localhost'
     port= 10101
+    htype= 0
     ai= 1
     ip_version= 4
     while ai < acount:
@@ -119,6 +124,10 @@ def main( argv ):
                 if ai+1 < acount:
                     ai+= 1
                     port= int(argv[ai])
+            elif arg == '-h' or arg == '--type':
+                if ai+1 < acount:
+                    ai+= 1
+                    htype= int(argv[ai])
         else:
             if command:
                 command+= ' ' + arg
@@ -128,7 +137,7 @@ def main( argv ):
     if command:
         #print( host, port, ip_version )
         sock= ConnectionSocket.createAndConnect( host, port, ip_version )
-        sock.sendCommand( command )
+        sock.sendCommand( command, htype )
     else:
         usage()
     return  0
