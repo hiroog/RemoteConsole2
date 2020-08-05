@@ -19,7 +19,7 @@ namespace UnrealBuildTool.Rules
 					"Sockets",
 				});
 			PublicDefinitions.AddRange( new string[] {
-					"USE_UALIB=0",
+					"USE_UALIBNET=0",
 				});
 		}
 	}

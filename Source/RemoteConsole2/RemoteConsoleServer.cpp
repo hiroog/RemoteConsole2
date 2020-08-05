@@ -3,7 +3,7 @@
 
 #include "RemoteConsoleServer.h"
 
-#if USE_UALIB
+#if USE_UALIBNET
 #include <ualib/ualib.h>
 #include <ualib/core/thread/ThreadInstance.h>
 #include <ualib/core/thread/CriticalSection.h>
@@ -76,7 +76,7 @@ FRemoteConsoleServer::~FRemoteConsoleServer()
 
 void	FRemoteConsoleServer::StartServer( const char* host, int port, int ipv )
 {
-#if USE_UALIB
+#if USE_UALIBNET
 	iServer= UA_MEMORY::New<ECommandServer>();
 	const char*	hostname= host;
 	if( !hostname ){
@@ -101,7 +101,7 @@ void	FRemoteConsoleServer::StartServer( const char* host, int port, int ipv )
 
 void	FRemoteConsoleServer::StopServer()
 {
-#if USE_UALIB
+#if USE_UALIBNET
 	if( iServer ){
 		//UA_LOG( "RemoteConsole::Request Quit ServerTherad\n" );
 		iServer->ExitServer();
@@ -121,7 +121,7 @@ void	FRemoteConsoleServer::StopServer()
 
 void	FRemoteConsoleServer::Flush( UWorld* world )
 {
-#if USE_UALIB
+#if USE_UALIBNET
 	if( iServer ){
 		if( iServer->HasCommand.Get() ){
 			iServer->Lock.Lock();
