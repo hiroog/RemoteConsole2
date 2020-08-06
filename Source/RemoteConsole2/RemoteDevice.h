@@ -5,11 +5,18 @@
 #include "RemoteConsole2.h"
 #include "IInputDevice.h"
 #include "RemoteConsoleServer2.h"
+#if USE_UALIBNET
+# include "RemoteConsoleServer.h"
+#endif
 
 
 class FRemoteDevice : public IInputDevice {
 	TSharedRef<FGenericApplicationMessageHandler>	MessageHandler;
+#if USE_UALIBNET
+	FRemoteConsoleServer	Server;
+#else
 	FRemoteConsoleServer2	Server;
+#endif
 public:
 
 	FRemoteDevice( const TSharedRef<FGenericApplicationMessageHandler>& handler );

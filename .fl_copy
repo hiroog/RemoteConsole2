@@ -1,0 +1,12 @@
+/\.git/
+/\.fl_copyto3$
+/\.gitignore$
+^/LICENSE$
+^/README.md$
+^/RetemoConsole2\.uplugin$
+/Tool/py/embedded\.txt
+\.txt$
+FLB_Makefile\.py$
+/__pycache__/
+/obj/
+/\.fl_copy$

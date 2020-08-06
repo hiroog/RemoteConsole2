@@ -18,9 +18,18 @@ namespace UnrealBuildTool.Rules
 					"Networking",
 					"Sockets",
 				});
-			PublicDefinitions.AddRange( new string[] {
-					"USE_UALIBNET=0",
-				});
+			if( File.Exists( Path.Combine( ModuleDirectory, "../ThirdParty/ualibnet/ualibnet.Build.cs" ) ) ){
+				PublicDefinitions.AddRange( new string[] {
+						"USE_UALIBNET=1",
+					});
+				PublicDependencyModuleNames.AddRange( new string[] {
+						"ualibnet",
+					});
+			}else{
+				PublicDefinitions.AddRange( new string[] {
+						"USE_UALIBNET=0",
+					});
+			}
 		}
 	}
 }
