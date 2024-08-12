@@ -1,27 +1,41 @@
-# UE4 Remote Console Command Plugin
+# UE5 RemoteConsole2 Plugin
 
-Keyboard が使えない状態で UE4 の Console Command を実行します。
-同一 LAN に接続した PC 上で command 入力できます。
-
-Windows PC 及び Android で動作確認しています。
-
-## install
-
-1. Python 3.x (3.6以上推奨) を install して path を通しておく
-1. RemoteConsole2 フォルダを UE4 Project/Plugins/ 以下に copy
+UE5 にネットワーク経由でさまざまなコマンドの送信や操作ができます。
 
 
-## send Console Command
+## Install 手順
+
+1. Python 3.x (3.6以上推奨) をインストールしてパスを通しておきます
+2. RemoteConsole2 フォルダを UE5 Project/Plugins/ 以下にコピーします
+
+
+## Console Command 送信の例
 
 1. RemoteConsole2/Tool/SendCommand.bat を実行します。
-1. host の欄にゲームを起動している Target (PC,SmartPhone等) の IP address を入れます。
-1. Command を入力して Send ボタンを押します。
+2. host の欄にゲームを起動している Target (PC 等) の IP address を入れます。
+3. Command を入力して Send ボタンを押します。
 
-UE4 側の Server が ipv6 非対応なので ipv6 の checkbox は off のまま使ってください。
 
-Console 出力の確認は IDE や logcat など SDK 標準のツールを使用してください。
+## コマンドライン版
 
-## configuration
+直接 Tool/py/SendCommandLine.py を使用することができます。
+Console Command だけでなく擬似的なキーボードやコントローラーの入力もできます。
 
-Server の Port 番号は 10101 です。
-RemoteConsole2/Source/RemoteConsole2/RemoteDevice.cpp の StartServer の引数で変更できます。
+これはログの取得を行うコマンドの例です。DefaultEngine.ini で bCaptureLog=true の設定が必要です。
+```
+python SendCommandLine.py --bg_logger --log_echo --sleep 300
+```
+
+
+## Configuration
+
+DefaultEngine.ini でポート番号設定やログ取得の許可ができます。
+
+
+```ini
+[RemoteConsolePlugin2]
+bCaptureLog=true
+Port=10101
+IPV=4
+```
+

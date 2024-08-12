@@ -1,0 +1,3 @@
+python AutoPlayScript.py
+
+pause

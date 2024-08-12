@@ -1,4 +1,4 @@
-// RemoteConsole2 2020/07/25
+// RemoteConsole2 2020/07/25 Hiroyuki Ogasawara
 // vim:ts=4 sw=4 noet:
 
 using	UnrealBuildTool;
@@ -14,23 +14,15 @@ namespace UnrealBuildTool.Rules
 					"Core",
 					"CoreUObject",
 					"Engine",
+					"InputCore",
 					"InputDevice",
+					"ApplicationCore",
 					"Networking",
 					"Sockets",
+					"UMG",
 				});
-			if( File.Exists( Path.Combine( ModuleDirectory, "../ThirdParty/ualibnet/ualibnet.Build.cs" ) ) ){
-				PublicDefinitions.AddRange( new string[] {
-						"USE_UALIBNET=1",
-					});
-				PublicDependencyModuleNames.AddRange( new string[] {
-						"ualibnet",
-					});
-			}else{
-				PublicDefinitions.AddRange( new string[] {
-						"USE_UALIBNET=0",
-					});
-			}
 		}
 	}
 }
+
 

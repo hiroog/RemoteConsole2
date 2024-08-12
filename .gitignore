@@ -1,3 +1,10 @@
 Binaries/
 Intermediate/
 __pycache__
+ControllerClient/obj/
+ControllerClient/*.exe
+ControllerClient/win32/remote_c.*
+ControllerClient/win32/x64
+Tool/Python
+Tool/py/send_command_option.txt
+*.user

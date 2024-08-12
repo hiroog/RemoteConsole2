@@ -1,0 +1,223 @@
+Begin Dictionary
+#=====================================================================================
+# Windows
+#=====================================================================================
+C win32
+ Begin Dictionary
+
+  C "Wireless controller for PLAYSTATION(R)3"
+   Begin Dictionary
+#-------------------------------------------------------------------------------------
+# PS3 SIXAXIS: SELECT=8, START=9
+#==========  UP  DW  LF  RT   TA  TB  TX  TY   L1  R1  L2  R2  L3  R3   M0  M1  M2  M3
+B Button    255 255 255 255    2   1   3   0    6   7   4   5  10  11    8   9 255 255
+#==========  LX  LY  RX  RY  TL  TR    DX   DY
+B Stick       0   1   2   5   3   4   255  255
+#-------------------------------------------------------------------------------------
+   End
+
+  C "PLAYSTATION(R)3 Controller"
+   Begin Dictionary
+#-------------------------------------------------------------------------------------
+# PS3 SIXAXIS: SELECT=8, START=9
+#==========  UP  DW  LF  RT   TA  TB  TX  TY   L1  R1  L2  R2  L3  R3   M0  M1  M2  M3
+B Button    255 255 255 255    2   1   3   0    6   7   4   5  10  11    8   9 255 255
+#==========  LX  LY  RX  RY  TL  TR    DX   DY
+B Stick       0   1   2   5   3   4   255  255
+#-------------------------------------------------------------------------------------
+   End
+
+  C "Wireless Controller"
+   Begin Dictionary
+#-------------------------------------------------------------------------------------
+# PS4 DUALSHOCK4: Share=8, Opt=9, PS=12, PadClick=13
+# PS5 DUALSENSE:  Create=8, Opt=9, PS=12, PadClick=13
+#==========  UP  DW  LF  RT   TA  TB  TX  TY   L1  R1  L2  R2  L3  R3   M0  M1  M2  M3
+B Button    255 255 255 255    1   2   0   3    4   5   6   7  10  11    8   9  12  13
+#==========  LX  LY  RX  RY  TL  TR    DX   DY
+B Stick      0   1   2   5   3   4    255  255
+#-------------------------------------------------------------------------------------
+   End
+
+  C "DUALSHOCKR4 USB Wireless Adaptor"
+   Begin Dictionary
+#-------------------------------------------------------------------------------------
+# PS4 DUALSHOCK4: Share=8, Opt=9, PS=12, PadClick=13
+#==========  UP  DW  LF  RT   TA  TB  TX  TY   L1  R1  L2  R2  L3  R3   M0  M1  M2  M3
+B Button    255 255 255 255    1   2   0   3    4   5   6   7  10  11    8   9  12  13
+#==========  LX  LY  RX  RY  TL  TR    DX   DY
+B Stick      0   1   2   5   3   4    255  255
+#-------------------------------------------------------------------------------------
+   End
+
+  C "Wireless Gamepad"
+   Begin Dictionary
+#-------------------------------------------------------------------------------------
+# Switch Pro Controller: Minus=8, Plus=9, HOME=12, Capture=13
+#==========  UP  DW  LF  RT   TA  TB  TX  TY   L1  R1  L2  R2  L3  R3   M0  M1  M2  M3
+B Button    255 255 255 255    0   1   2   3    4   5   6   7  10  11    8   9  12  13
+#==========  LX  LY  RX  RY  TL  TR    DX   DY
+B Stick      0   1   3   4  255 255   255  255
+#-------------------------------------------------------------------------------------
+   End
+
+  C "Controller (XBOX 360 For Windows)"
+   Begin Dictionary
+    B XInput  1
+#-------------------------------------------------------------------------------------
+# Xbox360 USB: Back=6, Start=7
+#==========  UP  DW  LF  RT   TA  TB  TX  TY   L1  R1  L2  R2  L3  R3   M0  M1  M2  M3
+B Button    255 255 255 255    0   1   2   3    4   5 255 255   8   9    6   7 255 255
+#==========  LX  LY  RX  RY  TL  TR    DX   DY
+B Stick      0   1   3   4  255 255   255  255
+#-------------------------------------------------------------------------------------
+   End
+
+  C "Controller (Xbox One For Windows)"
+   Begin Dictionary
+    B XInput  1
+#-------------------------------------------------------------------------------------
+# Xbox360 USB: Back=6, Start=7
+# XboxSX|SS Adp: Back=6, Start=7
+#==========  UP  DW  LF  RT   TA  TB  TX  TY   L1  R1  L2  R2  L3  R3   M0  M1  M2  M3
+B Button    255 255 255 255    0   1   2   3    4   5 255 255   8   9    6   7 255 255
+#==========  LX  LY  RX  RY  TL  TR    DX   DY
+B Stick      0   1   3   4  255 255   255  255
+#-------------------------------------------------------------------------------------
+   End
+
+  C "Bluetooth LE XINPUT 互換入力デバイス"
+   Begin Dictionary
+    B XInput  1
+#-------------------------------------------------------------------------------------
+# XboxSX|SS BT: Back=6, Start=7
+#==========  UP  DW  LF  RT   TA  TB  TX  TY   L1  R1  L2  R2  L3  R3   M0  M1  M2  M3
+B Button    255 255 255 255    0   1   2   3    4   5 255 255   8   9    6   7 255 255
+#==========  LX  LY  RX  RY  TL  TR    DX   DY
+B Stick     0   1   3   4  255 255   255  255
+#-------------------------------------------------------------------------------------
+   End
+
+  C "Bluetooth LE XINPUT compatible input device"
+   Begin Dictionary
+    B XInput  1
+#-------------------------------------------------------------------------------------
+# XboxSX|SS BT: Back=6, Start=7
+#==========  UP  DW  LF  RT   TA  TB  TX  TY   L1  R1  L2  R2  L3  R3   M0  M1  M2  M3
+B Button    255 255 255 255    0   1   2   3    4   5 255 255   8   9    6   7 255 255
+#==========  LX  LY  RX  RY  TL  TR    DX   DY
+B Stick      0   1   3   4  255 255   255  255
+#-------------------------------------------------------------------------------------
+   End
+
+
+ End
+
+#=====================================================================================
+# Linux
+#=====================================================================================
+C linux
+ Begin Dictionary
+
+  C "Sony PLAYSTATION(R)3 Controller"
+   Begin Dictionary
+#-------------------------------------------------------------------------------------
+# PS3 SIXAXIS USB: SELECT=0, START=3
+#==========  UP  DW  LF  RT   TA  TB  TX  TY   L1  R1  L2  R2  L3  R3   M0  M1  M2  M3
+B Button     13  14  15  16    0   1   3   2    4   5   6   7  11  12    8   9  10 255
+#==========  LX  LY  RX  RY  TL  TR    DX   DY
+B Stick      0   1   3   4    2   5   255  255
+#-------------------------------------------------------------------------------------
+   End
+
+  C "Sony Interactive Entertainment Wireless Controller"
+   Begin Dictionary
+#-------------------------------------------------------------------------------------
+# PS4 DUALSHOCK4 USB: SHARE=8, OPT=9, PS=10, PadClick=--
+#==========  UP  DW  LF  RT   TA  TB  TX  TY   L1  R1  L2  R2  L3  R3   M0  M1  M2  M3
+B Button    255 255 255 255    0   1   3   2    4   5   6   7  11  12    8   9  10 255
+#==========  LX  LY  RX  RY  TL  TR    DX   DY
+B Stick      0   1   3   4    2   5     6    7
+#-------------------------------------------------------------------------------------
+   End
+
+  C "Sony Interactive Entertainment Wireless Controller"
+   Begin Dictionary
+#-------------------------------------------------------------------------------------
+# PS5 DUALSENSE USB: SHARE=8, OPT=9, PS=12, PadClick=13, Mute=14
+#==========  UP  DW  LF  RT   TA  TB  TX  TY   L1  R1  L2  R2  L3  R3   M0  M1  M2  M3
+B Button    255 255 255 255    1   2   0   3    4   5   6   7  10  11    8   9  12  13
+#==========  LX  LY  RX  RY  TL  TR    DX   DY
+B Stick      0   1   2   5    3   4     6    7
+#-------------------------------------------------------------------------------------
+   End
+
+  C "Sony Computer Entertainment Wireless Controller"
+   Begin Dictionary
+#-------------------------------------------------------------------------------------
+# PS4 DUALSHOCK4 USB: SHARE=8, OPT=9, PS=12, PadClick=13
+#==========  UP  DW  LF  RT   TA  TB  TX  TY   L1  R1  L2  R2  L3  R3   M0  M1  M2  M3
+B Button    255 255 255 255    1   2   0   3    4   5   6   7  10  11    8   9  12  13
+#==========  LX  LY  RX  RY  TL  TR    DX   DY
+B Stick      0   1   2   5    3   4     6    7
+#-------------------------------------------------------------------------------------
+   End
+
+  C "Wireless Controller"
+   Begin Dictionary
+#-------------------------------------------------------------------------------------
+# PS4 DUALSHOCK4 BT: SHARE=8, OPT=9, PS=12, PadClick=13
+#==========  UP  DW  LF  RT   TA  TB  TX  TY   L1  R1  L2  R2  L3  R3   M0  M1  M2  M3
+B Button    255 255 255 255    0   1   3   2    4   5   6   7  11  12    8   9  10 255
+#==========  LX  LY  RX  RY  TL  TR    DX   DY
+B Stick      0   1   3   4    2   5     6    7
+#-------------------------------------------------------------------------------------
+   End
+
+  C "Microsoft X-Box 360 pad"
+   Begin Dictionary
+#-------------------------------------------------------------------------------------
+# Xbox360 USB: Back=6, Start=7, (X)=8
+#==========  UP  DW  LF  RT   TA  TB  TX  TY   L1  R1  L2  R2  L3  R3   M0  M1  M2  M3
+B Button    255 255 255 255    0   1   2   3    4   5 255 255   9  10    6   7   8 255
+#==========  LX  LY  RX  RY  TL  TR    DX   DY
+B Stick      0   1   3   4    2   5     6    7
+#-------------------------------------------------------------------------------------
+   End
+
+  C "Generic X-Box pad"
+   Begin Dictionary
+#-------------------------------------------------------------------------------------
+# XboxSX|SS USB: Back=6, Start=7, (X)=8
+#==========  UP  DW  LF  RT   TA  TB  TX  TY   L1  R1  L2  R2  L3  R3   M0  M1  M2  M3
+B Button    255 255 255 255    0   1   2   3    4   5 255 255   9  10    6   7   8 255
+#==========  LX  LY  RX  RY  TL  TR    DX   DY
+B Stick      0   1   3   4    2   5     6    7
+#-------------------------------------------------------------------------------------
+   End
+
+  C "Xbox Wireless Controller"
+   Begin Dictionary
+#-------------------------------------------------------------------------------------
+# XboxSX|SS BT: Back=6, Start=7, (X)=8
+#==========  UP  DW  LF  RT   TA  TB  TX  TY   L1  R1  L2  R2  L3  R3   M0  M1  M2  M3
+B Button    255 255 255 255    0   1   3   4    6   7 255 255  13  14   10  11  12 255
+#==========  LX  LY  RX  RY  TL  TR    DX   DY
+B Stick      0   1   2   3    5   4     6    7
+#-------------------------------------------------------------------------------------
+   End
+
+  C "Pro Controller"
+   Begin Dictionary
+#-------------------------------------------------------------------------------------
+# Switch Pro Controller: Minus=8, Plus=9, HOME=12, Capture=13
+#==========  UP  DW  LF  RT   TA  TB  TX  TY   L1  R1  L2  R2  L3  R3   M0  M1  M2  M3
+B Button    255 255 255 255    0   1   2   3    4   5   6   7  10  11    8   9  12  13
+#==========  LX  LY  RX  RY  TL  TR    DX   DY
+B Stick      0   1   2   3  255 255     4    5
+#-------------------------------------------------------------------------------------
+   End
+
+ End
+
+End

@@ -1,10 +1,9 @@
-// RemoteConsole2 2020/07/25
+// RemoteConsole2 2020/07/25 Hiroyuki Ogasawara
 // vim:ts=4 sw=4 noet:
 
-#ifndef	REMOTE_CONSOLE_2_PLUGIN_H_
-#define	REMOTE_CONSOLE_2_PLUGIN_H_
+#pragma once
 
 #include	"CoreMinimal.h"
 
-#endif
+DECLARE_LOG_CATEGORY_EXTERN( LogRemoteConsole2, Log, All );
 
