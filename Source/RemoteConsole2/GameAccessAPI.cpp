@@ -51,7 +51,7 @@ void	FGameAccessAPI::Quit()
 
 void	FGameAccessAPI::CallbackAddWidget( UWidget* widget, ULocalPlayer* player )
 {
-	WidgetArray.Add( std::move(MakeWeakObjectPtr( widget )) );
+	WidgetArray.Add( MakeWeakObjectPtr( widget ) );
 	UE_LOG(LogRemoteConsole2,Verbose,TEXT("RemoteConsole2:GameAPI:WidgetAdded %s (%d)"), *widget->GetName(), WidgetArray.Num() );
 }
 
