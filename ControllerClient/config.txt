@@ -2,6 +2,5 @@ Begin Dictionary
   I Port     10101
   S Host     "127.0.0.1"
   I IPV      4
-  S PadTable "pad_table.txt"
 End
 

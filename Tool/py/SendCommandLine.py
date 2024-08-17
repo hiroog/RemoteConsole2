@@ -122,6 +122,13 @@ class CommandTool:
     def f_level_name( self, params ):
         print( self.get_level_name().get() )
 
+    #--------------------------------------------------------------------------
+
+    def f_replay( self, params ):
+        self.console.replay( params.replay )
+
+    #--------------------------------------------------------------------------
+
     def f_run( self ):
         for func,params in self.options.func_list:
             if hasattr( self, func ):
@@ -135,7 +142,7 @@ class CommandTool:
 #------------------------------------------------------------------------------
 
 def usage():
-    print( 'SendCommand v2.00 Hiroyuki Ogasawara' )
+    print( 'SendCommand v2.10 Hiroyuki Ogasawara' )
     print( 'usage: SendCommand [<options>] <cmd>...' )
     print( '  -4                   use ipv4' )
     print( '  -6                   use ipv6' )
@@ -167,6 +174,7 @@ def usage():
     print( '  --level_name' )
     print( '  --wait_log <text>' )
     print( '  --bg_logger          start logging thread' )
+    print( '  --replay <replay_file>' )
     print( '  --log_echo' )
     print( '  --net_echo' )
     print( 'ex. SendCommand -h 192.168.0.10 --cmd stat fps' )
@@ -187,6 +195,7 @@ class Params( RemoteConsole2API.OptionBase ):
         self.pad_button= ''
         self.value= 0.0
         self.widget_name= ''
+        self.replay= 'key_log.txt'
 
 
 def main( argv ):
@@ -277,6 +286,9 @@ def main( argv ):
                 func= 'f_level_name'
             elif arg == '--pad_reset':
                 func= 'f_pad_reset'
+            elif arg == '--replay':
+                ai= params.set_str( ai, argv, 'replay' )
+                func= 'f_replay'
             else:
                 usage()
         else:

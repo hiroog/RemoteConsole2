@@ -3,27 +3,24 @@
 
 #include	<flatlib/core/thread/ThreadInstance.h>
 #include	<flatlib/core/thread/AtomicValue.h>
+#include	<flatlib/core/thread/Signal.h>
 #include	<flatlib/input/pad/PadInput.h>
 #include	<flatlib/core/network/CommandServer.h>
 #include	<flatlib/core/text/ConstString.h>
 #include	<flatlib/core/ut/StaticArray.h>
+#include	<atomic>
 
 
 //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
-class KeyQueue {
-public:
-	enum : unsigned int {
-		KEYARRAY_SIZE	=	32,
-	};
-	flatlib::ut::StaticArray<uint32_t,KEYARRAY_SIZE>	KeyArray;
-	flatlib::thread::CriticalSection	KeyLock;
+class QueueBase {
+protected:
+	flatlib::thread::CriticalSection	QueueLock;
 	uint32_t	DataSize= 0;
 public:
-	KeyQueue();
-	void		Push( uint32_t code, bool down );
+	QueueBase();
 	uint32_t	GetDataSize() const;
-	uint32_t	GetData( uint32_t index ) const;
 	void		Reset();
 	void		Lock();
 	void		Unlock();
@@ -31,6 +28,67 @@ public:
 
 
 //-----------------------------------------------------------------------------
+
+class KeyQueue : public QueueBase {
+public:
+	enum : unsigned int {
+		KEYARRAY_SIZE	=	32,
+	};
+	flatlib::ut::StaticArray<uint32_t,KEYARRAY_SIZE>	KeyArray;
+public:
+	KeyQueue();
+	void		Push( uint32_t key_code, bool down );
+	uint32_t	GetData( uint32_t index ) const;
+};
+
+
+//-----------------------------------------------------------------------------
+
+struct ControllerStatus {
+	short	Analog[6];
+	unsigned int	Button;
+};
+
+struct Event {
+	ControllerStatus	Status;	// (4)
+	double		EventTime;		// (2)
+	uint32_t	KeyCode;		// (1)
+	uint32_t	EventType;		// (1)
+};
+
+class EventQueue : public QueueBase {
+public:
+	enum : unsigned int {
+		EVENT_CONTROLLER	=	0,
+		EVENT_KEY,
+	};
+	enum : unsigned int {
+		QUEUE_SIZE		=	512,
+		TRIGGER_SIZE	=	(QUEUE_SIZE*2/3),
+	};
+	flatlib::ut::StaticArray<Event,QUEUE_SIZE>	EventArray;
+	flatlib::thread::Signal		EventSignal;
+	ControllerStatus	PrevStatus;
+public:
+	EventQueue();
+	void	Push( const ControllerStatus& status, double time );
+	void	PushKey( uint32_t key_code, double time );
+	uint32_t	CopyData( flatlib::ut::StaticArray<Event,QUEUE_SIZE>& dest );
+	bool	Wait( uint32_t ms );
+};
+
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+namespace flatlib {
+	namespace text {
+		class TextPool;
+	}
+	namespace file {
+		class FileHandle;
+	}
+}
 
 class NetworkClient {
 public:
@@ -49,29 +107,29 @@ private:
 		KEY_DOWN,
 		KEY_CHAR,
 	};
-	struct ControllerStatus {
-		short	Analog[6];
-		unsigned int	Button;
-	};
 private:
 	KeyQueue	Queue;
-	flatlib::thread::ThreadInstance*	iThread;
-	void*			iWindow;
+	EventQueue	RecQueue;
+	flatlib::thread::ThreadInstance*	iThread= nullptr;
+	flatlib::thread::ThreadInstance*	iRecordingThread= nullptr;
+	void*			iWindow= nullptr;
 	flatlib::input::PadInput		Input;
 	flatlib::network::CommandClient	Client;
-	flatlib::thread::AtomicValue<int>	LoopFlag;
 	flatlib::thread::AtomicValue<unsigned int>	Status;
 	flatlib::thread::AtomicValue<unsigned int>	DeviceCount;
 	flatlib::text::ConstString		Host;
-	unsigned int	Port;
-	unsigned int	UpdateCounter;
-	bool	bInitialized;
-	bool	bIPv6;
+	unsigned int	Port= 10101;
+	unsigned int	UpdateCounter= 0;
+	std::atomic<bool>	bLoopFlag= false;
+	std::atomic<bool>	bRecordingFlag= false;
+	std::atomic<bool>	bInitialized= false;
+	bool	bIPv6= false;
 
 	bool	Connect();
 	void	ScanController( bool update= false );
-	bool	UpdateController();
-	bool	UpdateKeyboard();
+	bool	UpdateController( double clock );
+	bool	UpdateKeyboard( double clock );
+	void	FlushEventQueue( flatlib::file::FileHandle& rec_file, flatlib::text::TextPool& pool, flatlib::ut::StaticArray<Event,EventQueue::QUEUE_SIZE>& event_array, uint32_t data_size );
 public:
 	NetworkClient();
 	~NetworkClient();
@@ -91,6 +149,13 @@ public:
 	{
 		Queue.Push( code, down );
 	}
+	bool	IsRecording() const
+	{
+		return	bRecordingFlag.load();
+	}
+	void	ToggleRecording();
 };
 
 
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------

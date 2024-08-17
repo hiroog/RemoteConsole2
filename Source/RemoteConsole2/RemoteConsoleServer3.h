@@ -92,7 +92,7 @@ private:
 	//-------------------------------------------------------------------------
 	TArray<FThreadInstance*>	ThreadArray;
 	TArray<KeyboardStatus>		KeyboardBuffer;
-	TArray<CaptureStatus>		CaptureBuffer;
+	//TArray<CaptureStatus>		CaptureBuffer;
 	FConsoleMessageQueue		GameAPIBuffer{ false, GAME_API_QUEUE_SIZE };
 	FConsoleMessageQueue		ResultBuffer{ true, RESULT_QUEUE_SIZE };
 	ControllerStatus			Status;

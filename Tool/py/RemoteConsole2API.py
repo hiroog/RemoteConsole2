@@ -482,6 +482,10 @@ class ConsoleAPI:
         self.print( 'cmd:send controller' )
         self.sock.sendController( controller )
 
+    def send_keycode( self, key_code, action ):
+        self.print( 'cmd:send keycode %d (%d)' % (key_code, action) )
+        self.sock.sendKeyboard( key_code, key_code, action )
+
     def get_keycode( self, key_name ):
         if key_name in self.VKEY_MAP:
             return  self.VKEY_MAP[key_name]
@@ -523,6 +527,52 @@ class ConsoleAPI:
         self.print( 'cmd:get level name' )
         return  self.send_request_api( ConnectionSocket.CMD_GET_LEVEL_NAME, 0 )
 
+    #--------------------------------------------------------------------------
+
+    def replay_wait( self, clock, base_sys_clock ):
+        while True:
+            sys_clock= time.perf_counter()-base_sys_clock
+            if sys_clock >= clock:
+                break
+            dclock= clock - sys_clock
+            if dclock >= 1.0/90:
+                time.sleep( dclock )
+            else:
+                time.sleep( 0 )
+
+    def replay( self, log_file ):
+        self.print( 'cmd:replay %s' % log_file )
+        with open( log_file, 'r' ) as fi:
+            base_replay_clock= -1.0;
+            base_sys_clock= time.perf_counter()
+            for line in fi:
+                line= line.strip()
+                if line == '' or line[0] == '#':
+                    continue
+                params= line.split()
+                if params[0] == 'C':
+                    controller= Controller()
+                    clock= float(params[1])
+                    if base_replay_clock < 0.0:
+                        base_replay_clock= clock
+                    self.replay_wait( clock - base_replay_clock, base_sys_clock )
+                    controller.button_bit= int(params[2],16)
+                    controller.stick[0]= int(params[3]) & 0xffff
+                    controller.stick[1]= int(params[4]) & 0xffff
+                    controller.stick[2]= int(params[5]) & 0xffff
+                    controller.stick[3]= int(params[6]) & 0xffff
+                    controller.stick[4]= int(params[7]) & 0xffff
+                    controller.stick[5]= int(params[8]) & 0xffff
+                    self.sock.sendController( controller )
+                elif params[0] == 'K':
+                    clock= float(params[1])
+                    if base_replay_clock < 0.0:
+                        base_replay_clock= clock
+                    self.replay_wait( clock - base_replay_clock, base_sys_clock )
+                    key_code= int(params[2])
+                    action= key_code >> 16
+                    key_code&= 0xffff
+                    self.sock.sendKeyboard( key_code, key_code, action )
 
 
 #------------------------------------------------------------------------------

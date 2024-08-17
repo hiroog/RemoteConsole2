@@ -29,6 +29,46 @@ void	SplitCommandArgs( text::LineBuffer& line, ut::LinearArray<const char*>& arg
 }
 
 
+void	ParseCommandLineArgs( system::CoreContext* context, db::DBInterface* config, text::LineBuffer& line_buffer, const char* args_line )
+{
+	config->Set( "Port", 10101 );
+	config->Set( "Host", "127.0.0.1" );	// "::1"
+	config->Set( "IPV", 4 );
+	config->Set( "PadTable", (const char*)nullptr );
+	ut::LinearArray<const char*>	args;
+	SplitCommandArgs( line_buffer, args, args_line );
+	unsigned int	acount= args.GetDataSize();
+	for( unsigned int ai= 0 ; ai< acount ; ai++ ){
+		const char*	arg= args[ai];
+		if( *arg == '-' ){
+			switch( arg[1] ){
+			case 'p':	// -p8080
+				config->Set( "Port", atoi( arg+2 ) );
+				break;
+			case 'h':	// -p192.168.2.199
+				config->Set( "Host", arg+2 );
+				break;
+			case 't':	// -tpad_talbe.txt
+				config->Set( "PadTable", arg+2 );
+				break;
+			case '6':	// -6
+				config->Set( "IPV", 6 );
+				break;
+			case '4':	// -4
+				config->Set( "IPV", 4 );
+				break;
+			case 'c':	// -cconfig.txt
+				if( arg[2] ){
+					config= context->RDBGlobal().Load( "Config", arg+2 );
+				}
+				break;
+			}
+		}
+		FL_LOG( "%d: %s\n", ai, arg );
+	}
+}
+
+
 int WINAPI	WinMain( HINSTANCE hinstance, HINSTANCE, LPSTR args_line, int )
 {
 	auto*	context= system::CreateContext();
@@ -36,44 +76,7 @@ int WINAPI	WinMain( HINSTANCE hinstance, HINSTANCE, LPSTR args_line, int )
 	{
 		auto*	config= context->RDBGlobal().Create( "Config", "Dictionary" );
 		text::LineBuffer	line_buffer;
-		{
-			config->Set( "Port", 10101 );
-			config->Set( "Host", "127.0.0.1" );	// "::1"
-			config->Set( "IPV", 4 );
-			config->Set( "PadTable", "pad_table.txt" );
-			const char*		PadTableFile= nullptr;
-			ut::LinearArray<const char*>	args;
-			SplitCommandArgs( line_buffer, args, args_line );
-			unsigned int	acount= args.GetDataSize();
-			for( unsigned int ai= 0 ; ai< acount ; ai++ ){
-				const char*	arg= args[ai];
-				if( *arg == '-' ){
-					switch( arg[1] ){
-					case 'p':	// -p8080
-						config->Set( "Port", atoi( arg+2 ) );
-						break;
-					case 'h':	// -p192.168.2.199
-						config->Set( "Host", arg+2 );
-						break;
-					case 't':	// -tpad_talbe.txt
-						config->Set( "PadTable", arg+2 );
-						break;
-					case '6':	// -6
-						config->Set( "IPV", 6 );
-						break;
-					case '4':	// -4
-						config->Set( "IPV", 4 );
-						break;
-					case 'c':	// -cconfig.txt
-						if( arg[2] ){
-							config= context->RDBGlobal().Load( "Config", arg+2 );
-						}
-						break;
-					}
-				}
-				FL_LOG( "%d: %s\n", ai, arg );
-			}
-		}
+		ParseCommandLineArgs( context, config, line_buffer, args_line );
 
 		int			Port= config->Get<int>( "Port" );
 		int			ipv=  config->Get<int>( "IPV" );
@@ -102,10 +105,16 @@ int WINAPI	WinMain( HINSTANCE hinstance, HINSTANCE, LPSTR args_line, int )
 					}
 					return	0;
 				case WM_KEYDOWN:
-					client.PushKey( static_cast<uint32_t>( wparam ), true );
+					if( wparam == VK_HOME ){
+						client.ToggleRecording();
+					}else{
+						client.PushKey( static_cast<uint32_t>( wparam ), true );
+					}
 					return	0;
 				case WM_KEYUP:
-					client.PushKey( static_cast<uint32_t>( wparam ), false );
+					if( wparam != VK_HOME ){
+						client.PushKey( static_cast<uint32_t>( wparam ), false );
+					}
 					return	0;
 				case WM_PAINT: {
 						PAINTSTRUCT	ps;
@@ -114,17 +123,18 @@ int WINAPI	WinMain( HINSTANCE hinstance, HINSTANCE, LPSTR args_line, int )
 						text::StaticLineBuffer<256>	buffer;
 						sprintf_s( buffer.GetText(), 256, "Host:%s  Port:%d", Host, Port );
 						TextOutA( hdc, 5, 5, buffer.GetText(), buffer.GetDataSize() );
-						sprintf_s( buffer.GetText(), 256, "Controller=%d", client.GetDeviceCount() );
+						sprintf_s( buffer.GetText(), 256, "Controller=%d %s", client.GetDeviceCount(), client.IsRecording() ? "    ● REC" : "" );
 						TextOutA( hdc, 5, 5+24, buffer.GetText(), buffer.GetDataSize() );
+						const char*	status_string= "";
 						switch( client.GetStatus() ){
 						case NetworkClient::STATUS_WAITSERVER:
-							sprintf_s(buffer.GetText(), 256, "Waiting for server" );
+							status_string= "Waiting for server";
 							break;
 						case NetworkClient::STATUS_CONNECTED:
-							sprintf_s(buffer.GetText(), 256, "Connected" );
+							status_string= "Connected";
 							break;
 						}
-						TextOutA( hdc, 5, 5+48, buffer.GetText(), buffer.GetDataSize() );
+						TextOutA( hdc, 5, 5+48, status_string, static_cast<int>(strlen(status_string)) );
 						EndPaint( hwnd, &ps );
 						return	0;
 					}

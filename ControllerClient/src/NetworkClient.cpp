@@ -6,9 +6,12 @@
 #include	<flatlib/core/thread/ScopedLock.h>
 #include	<flatlib/core/thread/CriticalSection.h>
 #include	<flatlib/core/text/FileName.h>
+#include	<flatlib/core/text/TextPool.h>
 #include	<flatlib/core/system/Environment.h>
 #include	<flatlib/core/text/LineBuffer.h>
 #include	<flatlib/core/time/SystemClock.h>
+#include	<flatlib/core/file/FileSystem.h>
+#include	<flatlib/core/system/CoreContext.h>
 #include	"NetworkClient.h"
 #if FL_OS_WINDOWS
 # include	<objbase.h>
@@ -16,30 +19,54 @@
 
 using namespace flatlib;
 
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
+QueueBase::QueueBase()
+{
+}
+
+uint32_t	QueueBase::GetDataSize() const
+{
+	return	DataSize;
+}
+
+void	QueueBase::Lock()
+{
+	QueueLock.Lock();
+}
+
+void	QueueBase::Unlock()
+{
+	QueueLock.Unlock();
+}
+
+void	QueueBase::Reset()
+{
+	DataSize= 0;
+}
+
+
+
+//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
 KeyQueue::KeyQueue()
 {
 }
 
-void	KeyQueue::Push( uint32_t code, bool down )
+void	KeyQueue::Push( uint32_t key_code, bool down )
 {
 	thread::ScopedLock<KeyQueue>	lock( *this );
 	auto	index= DataSize;
 	if( index < KEYARRAY_SIZE ){
 		if( down ){
-			KeyArray[index]= code | (1<<31);
+			KeyArray[index]= key_code | (1<<16);
 		}else{
-			KeyArray[index]= code;
+			KeyArray[index]= key_code;
 		}
 		DataSize= index + 1;
 	}
-}
-
-uint32_t	KeyQueue::GetDataSize() const
-{
-	return	DataSize;
 }
 
 uint32_t	KeyQueue::GetData( uint32_t index ) const
@@ -47,31 +74,78 @@ uint32_t	KeyQueue::GetData( uint32_t index ) const
 	return	KeyArray[index];
 }
 
-void	KeyQueue::Lock()
+
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+EventQueue::EventQueue()
 {
-	KeyLock.Lock();
+	memory::MemClear( PrevStatus );
+	EventSignal.Initialize( true, false );
 }
 
-void	KeyQueue::Unlock()
+void	EventQueue::Push( const ControllerStatus& status, double time )
 {
-	KeyLock.Unlock();
+	thread::ScopedLock<EventQueue>	lock( *this );
+	auto	index= DataSize;
+	if( index >= QUEUE_SIZE ){
+		return;
+	}
+	if( memcmp( &status, &PrevStatus, sizeof(ControllerStatus) ) != 0 ){
+		Event	event;
+		event.Status= status;
+		event.EventTime= time;
+		event.EventType= EVENT_CONTROLLER;
+		EventArray[index]= std::move(event);
+		DataSize= index + 1;
+		PrevStatus= status;
+		if( DataSize >= TRIGGER_SIZE ){
+			EventSignal.Set();
+		}
+	}
 }
 
-void	KeyQueue::Reset()
+void	EventQueue::PushKey( uint32_t key_code, double time )
 {
-	DataSize= 0;
+	thread::ScopedLock<EventQueue>	lock( *this );
+	auto	index= DataSize;
+	if( index >= QUEUE_SIZE ){
+		return;
+	}
+	Event	event;
+	event.EventTime= time;
+	event.KeyCode= key_code;
+	event.EventType= EVENT_KEY;
+	EventArray[index]= std::move(event);
+	DataSize= index + 1;
+	if( DataSize >= TRIGGER_SIZE ){
+		EventSignal.Set();
+	}
+}
+
+uint32_t	EventQueue::CopyData( ut::StaticArray<Event,QUEUE_SIZE>& dest )
+{
+	thread::ScopedLock<EventQueue>	lock( *this );
+	uint32_t	data_size= DataSize;
+	for( uint32_t di= 0 ; di< data_size ; di++ ){
+		dest[di]= EventArray[di];
+	}
+	Reset();
+	EventSignal.Reset();
+	return	data_size;
+}
+
+bool	EventQueue::Wait( uint32_t ms )
+{
+	return	EventSignal.Wait( ms );
 }
 
 
 //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
-NetworkClient::NetworkClient() :
-	iThread( nullptr ),
-	iWindow( nullptr ),
-	Port( 10101 ),
-	UpdateCounter( 0 ),
-	bInitialized( false ),
-	bIPv6( false )
+NetworkClient::NetworkClient()
 {
 }
 
@@ -82,11 +156,15 @@ NetworkClient::~NetworkClient()
 
 void	NetworkClient::Stop()
 {
-	bInitialized= false;
+	bInitialized.store( false );
+	bLoopFlag.store( false );
 	if( iThread ){
-		LoopFlag.Set( 0 );
 		iThread->Join();
 		FL_MEMORY::ZDelete( iThread );
+	}
+	if( iRecordingThread ){
+		iRecordingThread->Join();
+		FL_MEMORY::ZDelete( iRecordingThread );
 	}
 }
 
@@ -95,6 +173,10 @@ void	NetworkClient::Wait()
 	if( iThread ){
 		iThread->Join();
 		FL_MEMORY::ZDelete( iThread );
+	}
+	if( iRecordingThread ){
+		iRecordingThread->Join();
+		FL_MEMORY::ZDelete( iRecordingThread );
 	}
 }
 
@@ -117,12 +199,9 @@ void	NetworkClient::ScanController( bool update )
 	}
 	Input->UpdateDevices();
 	unsigned int	controller_count= 0;
-	unsigned int	device_count= Input->GetDeviceCount();
-	for( unsigned int di= 0 ; di< device_count ; di++ ){
-		input::EventStick	stick;
-		if( Input->GetData( di, stick ) ){
-			controller_count++;
-		}
+	input::EventStick	stick;
+	if( Input->GetData( 0, stick ) ){
+		controller_count++;
 	}
 	if( controller_count != DeviceCount.Get() ){
 		DeviceCount.Set( controller_count );
@@ -141,7 +220,7 @@ inline float	Clamp_Internal( float value )
 	return	value;
 }
 
-bool	NetworkClient::UpdateController()
+bool	NetworkClient::UpdateController( double clock )
 {
 	if( UpdateCounter++ >= 60 * 3 ){
 		ScanController();
@@ -159,13 +238,19 @@ bool	NetworkClient::UpdateController()
 	status.Analog[4]= static_cast<short>( Clamp_Internal( data.Trigger.x ) * STICK_SCALE );
 	status.Analog[5]= static_cast<short>( Clamp_Internal( data.Trigger.y ) * STICK_SCALE );
 	status.Button= data.Button;
-	return	Client.SendCommand( CMD_CONTROLLER_CMD, &status, sizeof(ControllerStatus) );
+	bool	result= Client.SendCommand( CMD_CONTROLLER_CMD, &status, sizeof(ControllerStatus) );
+	if( result ){
+		if( bRecordingFlag.load() ){
+			RecQueue.Push( status, clock );
+		}
+	}
+	return	result;
 }
 
 
 //-----------------------------------------------------------------------------
 
-bool	NetworkClient::UpdateKeyboard()
+bool	NetworkClient::UpdateKeyboard( double clock )
 {
 	if( Queue.GetDataSize() ){
 		thread::ScopedLock<KeyQueue>	lock( Queue );
@@ -176,10 +261,57 @@ bool	NetworkClient::UpdateKeyboard()
 			if( !Client.SendCommand( CMD_KEYBOARD, nullptr, 0, (code >> 16) ? KEY_DOWN : KEY_UP, (keycode << 16) | keycode ) ){
 				return	false;
 			}
+			if( bRecordingFlag.load() ){
+				RecQueue.PushKey( code, clock );
+			}
 		}
 		Queue.Reset();
 	}
 	return	true;
+}
+
+
+//-----------------------------------------------------------------------------
+
+void	NetworkClient::FlushEventQueue( file::FileHandle& rec_file, text::TextPool& pool, ut::StaticArray<Event,EventQueue::QUEUE_SIZE>& event_array, uint32_t data_size )
+{
+	const char*		rec_file_name= "key_log.txt";
+	if( !data_size ){
+		return;
+	}
+	if( !rec_file.IsOpen() ){
+		rec_file.Create( rec_file_name );
+	}
+	if( !rec_file.IsOpen() ){
+		return;
+	}
+	pool.Truncate( 0 );
+	for( uint32_t di= 0 ; di< data_size ; di++ ){
+		const auto&	event= event_array[di];
+		switch( event.EventType ){
+		default:
+		case EventQueue::EVENT_CONTROLLER:
+			pool.AddFormat( "C %.4f %08x %d %d %d %d %d %d\n",
+					event.EventTime,
+					event.Status.Button,
+					event.Status.Analog[0],
+					event.Status.Analog[1],
+					event.Status.Analog[2],
+					event.Status.Analog[3],
+					event.Status.Analog[4],
+					event.Status.Analog[5]
+				);
+			break;
+		case EventQueue::EVENT_KEY:
+			pool.AddFormat( "K %.4f %05x\n",
+					event.EventTime,
+					event.KeyCode
+				);
+			break;
+		}
+	}
+	rec_file.Write( pool.GetBuffer(), pool.GetDataSize() );
+	pool.Truncate( 0 );
 }
 
 
@@ -203,25 +335,25 @@ void	NetworkClient::Start( void* win, const char* host, unsigned int port, const
 	}
 
 	Input.Create( nullptr, { pad_table_path, win, true } );
-	bInitialized= true;
-	LoopFlag.Set( 1 );
+	bInitialized.store( true );
+	bLoopFlag.store( true );
 
 	iThread= thread::CreateThreadFunction(
 		[this](){
 #if FL_OS_WINDOWS
 			::CoInitialize( 0 );
 #endif
-			for(; LoopFlag.Get() ;){
+			for(; bLoopFlag.load() ;){
 				float	SleepTime= 0.5f;
 				Status.Set( STATUS_WAITSERVER );
 				RedrawWindow( (HWND)iWindow, nullptr, nullptr, RDW_INVALIDATE|RDW_INTERNALPAINT );
-				for(; !Connect() && LoopFlag.Get() ;){
+				for(; !Connect() && bLoopFlag.load() ;){
 					thread::SleepThread( SleepTime );
 					SleepTime*= 2.0f;
 					if( SleepTime >= 5.0f ){
 						SleepTime= 5.0f;
 					}
-					if( !LoopFlag.Get() ){
+					if( !bLoopFlag.load() ){
 						break;
 					}
 					ScanController( true );
@@ -229,35 +361,79 @@ void	NetworkClient::Start( void* win, const char* host, unsigned int port, const
 				Status.Set( STATUS_CONNECTED );
 				RedrawWindow( (HWND)iWindow, nullptr, nullptr, RDW_INVALIDATE|RDW_INTERNALPAINT );
 				constexpr double	CLOCK_60FPS= 1.0f/60.0f;
-				double	next_clock= time::GetPerfCounter() + CLOCK_60FPS;
-				for(; LoopFlag.Get() ;){
+				double	base_clock= time::GetPerfCounter();
+				double	next_clock= base_clock + CLOCK_60FPS;
+				for(; bLoopFlag.load() ;){
 					auto	clock= time::GetPerfCounter();
 					if( clock >= next_clock ){
-						if( !UpdateController() || !UpdateKeyboard() ){
+						if( !UpdateController( clock-base_clock ) || !UpdateKeyboard( clock-base_clock ) ){
 							Client.Finalize();
 							break;
 						}
 						next_clock= clock + CLOCK_60FPS;
-						thread::SleepThread( 1.0f/180 );
+					}else{
+						float	dclock= static_cast<float>( next_clock - clock );
+						if( dclock >= 1.0f/90.0f ){
+							thread::SleepThread( dclock );
+						}else{
+							thread::SleepThread( 0 );
+						}
 					}
 				}
 			}
-			bInitialized= false;
+			bInitialized.store( false );
 			Client.Finalize();
 #if FL_OS_WINDOWS
 			::CoUninitialize();
 #endif
 		});
+	iRecordingThread= thread::CreateThreadFunction(
+		[this](){
+			ut::StaticArray<Event,EventQueue::QUEUE_SIZE>	event_array;
+			file::FileHandle	rec_file( system::RCore().RFileSystem() );
+			text::TextPool		pool;
+			bool	rec_flag= false;
+			for(; bLoopFlag.load() ;){
+				if( RecQueue.Wait( 1000 ) ){
+					FlushEventQueue( rec_file, pool, event_array, RecQueue.CopyData( event_array ) );
+				}
+				if( bRecordingFlag.load() ){
+					rec_flag= true;
+				}else if( rec_flag ){
+					FlushEventQueue( rec_file, pool, event_array, RecQueue.CopyData( event_array ) );
+					rec_flag= false;
+				}
+			}
+			FlushEventQueue( rec_file, pool, event_array, RecQueue.CopyData( event_array ) );
+			if( rec_file.IsOpen() ){
+				rec_file.Close();
+			}
+		});
 	iThread->Start();
+	iRecordingThread->Start();
 }
 
 input::PadInput*	NetworkClient::GetPad()
 {
-	if( bInitialized ){
+	if( bInitialized.load() ){
 		return	&Input;
 	}
 	return	nullptr;
 }
 
+void	NetworkClient::ToggleRecording()
+{
+	if( bInitialized.load() ){
+		if( bRecordingFlag.load() ){
+			bRecordingFlag.store( false );
+		}else{
+			bRecordingFlag.store( true );
+		}
+		RedrawWindow( (HWND)iWindow, nullptr, nullptr, RDW_INVALIDATE|RDW_INTERNALPAINT );
+	}
+}
 
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
