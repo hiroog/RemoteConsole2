@@ -144,7 +144,7 @@ int WINAPI	WinMain( HINSTANCE hinstance, HINSTANCE, LPSTR args_line, int )
 			});
 		window->OpenSimpleWindow(
 					"RemoteControllerClient",
-					"Remote Controller v1.30",
+					"Remote Controller v1.40",
 					WS_OVERLAPPEDWINDOW|WS_VISIBLE,
 					WS_EX_APPWINDOW,
 					320,80

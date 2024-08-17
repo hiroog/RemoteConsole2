@@ -127,6 +127,9 @@ class CommandTool:
     def f_replay( self, params ):
         self.console.replay( params.replay )
 
+    def f_decode( self, params ):
+        self.console.decode( params.replay )
+
     #--------------------------------------------------------------------------
 
     def f_run( self ):
@@ -289,6 +292,9 @@ def main( argv ):
             elif arg == '--replay':
                 ai= params.set_str( ai, argv, 'replay' )
                 func= 'f_replay'
+            elif arg == '--decode':
+                ai= params.set_str( ai, argv, 'replay' )
+                func= 'f_decode'
             else:
                 usage()
         else:

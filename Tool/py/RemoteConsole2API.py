@@ -535,10 +535,8 @@ class ConsoleAPI:
             if sys_clock >= clock:
                 break
             dclock= clock - sys_clock
-            if dclock >= 1.0/90:
-                time.sleep( dclock )
-            else:
-                time.sleep( 0 )
+            if dclock >= 0.012:
+                time.sleep( 0.01 )
 
     def replay( self, log_file ):
         self.print( 'cmd:replay %s' % log_file )
@@ -553,9 +551,6 @@ class ConsoleAPI:
                 if params[0] == 'C':
                     controller= Controller()
                     clock= float(params[1])
-                    if base_replay_clock < 0.0:
-                        base_replay_clock= clock
-                    self.replay_wait( clock - base_replay_clock, base_sys_clock )
                     controller.button_bit= int(params[2],16)
                     controller.stick[0]= int(params[3]) & 0xffff
                     controller.stick[1]= int(params[4]) & 0xffff
@@ -563,16 +558,54 @@ class ConsoleAPI:
                     controller.stick[3]= int(params[6]) & 0xffff
                     controller.stick[4]= int(params[7]) & 0xffff
                     controller.stick[5]= int(params[8]) & 0xffff
+                    if base_replay_clock < 0.0:
+                        base_replay_clock= clock
+                        base_sys_clock= time.perf_counter()
+                    self.replay_wait( clock - base_replay_clock, base_sys_clock )
                     self.sock.sendController( controller )
                 elif params[0] == 'K':
                     clock= float(params[1])
-                    if base_replay_clock < 0.0:
-                        base_replay_clock= clock
-                    self.replay_wait( clock - base_replay_clock, base_sys_clock )
-                    key_code= int(params[2])
+                    key_code= int(params[2],16)
                     action= key_code >> 16
                     key_code&= 0xffff
+                    if base_replay_clock < 0.0:
+                        base_replay_clock= clock
+                        base_sys_clock= time.perf_counter()
+                    self.replay_wait( clock - base_replay_clock, base_sys_clock )
                     self.sock.sendKeyboard( key_code, key_code, action )
+
+    def decode( self, log_file ):
+        self.print( 'cmd:decode %s' % log_file )
+        prev_clock= -1
+        with open( log_file, 'r' ) as fi:
+            for line in fi:
+                line= line.strip()
+                if line == '' or line[0] == '#':
+                    continue
+                params= line.split()
+                if params[0] == 'C':
+                    controller= Controller()
+                    clock= float(params[1])
+                    controller.button_bit= int(params[2],16)
+                    controller.stick[0]= int(params[3]) & 0xffff
+                    controller.stick[1]= int(params[4]) & 0xffff
+                    controller.stick[2]= int(params[5]) & 0xffff
+                    controller.stick[3]= int(params[6]) & 0xffff
+                    controller.stick[4]= int(params[7]) & 0xffff
+                    controller.stick[5]= int(params[8]) & 0xffff
+                    if prev_clock >= 0:
+                        diff_clock= clock - prev_clock
+                        print( 'C %.5f  %.7f' % (clock, diff_clock) )
+                    prev_clock= clock
+                elif params[0] == 'K':
+                    clock= float(params[1])
+                    key_code= int(params[2],16)
+                    action= key_code >> 16
+                    key_code&= 0xffff
+                    if prev_clock >= 0:
+                        diff_clock= clock - prev_clock
+                        print( 'K %.5f  %.7f' % (clock, diff_clock) )
+                    prev_clock= clock
 
 
 #------------------------------------------------------------------------------

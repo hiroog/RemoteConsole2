@@ -1,6 +1,7 @@
 // 2021 Hiroyuki Ogasawara
 // vim:ts=4 sw=4 noet:
 
+#define _CRT_SECURE_NO_WARNINGS	1
 #include	<flatlib/core/memory/MemoryAllocator.h>
 #include	<flatlib/core/thread/Sleep.h>
 #include	<flatlib/core/thread/ScopedLock.h>
@@ -15,6 +16,7 @@
 #include	"NetworkClient.h"
 #if FL_OS_WINDOWS
 # include	<objbase.h>
+# include	<stdio.h>
 #endif
 
 using namespace flatlib;
@@ -222,13 +224,18 @@ inline float	Clamp_Internal( float value )
 
 bool	NetworkClient::UpdateController( double clock )
 {
-	if( UpdateCounter++ >= 60 * 3 ){
-		ScanController();
+	if( UpdateCounter++ >= 60 * 2 ){
+		if( DeviceCount.Get() == 0 ){
+			ScanController();
+		}
 		UpdateCounter= 0;
 	}
 	Input->Update();
 	input::EventStick	data;
-	Input->GetData( 0, data );
+	if( !Input->GetData( 0, data ) ){
+		DeviceCount.Set( 0 );
+		RedrawWindow( (HWND)iWindow, nullptr, nullptr, RDW_INVALIDATE|RDW_INTERNALPAINT );
+	}
 	ControllerStatus	status;
 	const float	STICK_SCALE= 32767.0f;
 	status.Analog[0]= static_cast<short>( Clamp_Internal( data.LeftStick.x ) * STICK_SCALE );
@@ -291,7 +298,7 @@ void	NetworkClient::FlushEventQueue( file::FileHandle& rec_file, text::TextPool&
 		switch( event.EventType ){
 		default:
 		case EventQueue::EVENT_CONTROLLER:
-			pool.AddFormat( "C %.4f %08x %d %d %d %d %d %d\n",
+			pool.AddFormat( "C %.5f %08x %d %d %d %d %d %d\n",
 					event.EventTime,
 					event.Status.Button,
 					event.Status.Analog[0],
@@ -303,7 +310,7 @@ void	NetworkClient::FlushEventQueue( file::FileHandle& rec_file, text::TextPool&
 				);
 			break;
 		case EventQueue::EVENT_KEY:
-			pool.AddFormat( "K %.4f %05x\n",
+			pool.AddFormat( "K %.5f %05x\n",
 					event.EventTime,
 					event.KeyCode
 				);
@@ -338,15 +345,16 @@ void	NetworkClient::Start( void* win, const char* host, unsigned int port, const
 	bInitialized.store( true );
 	bLoopFlag.store( true );
 
-	iThread= thread::CreateThreadFunction(
-		[this](){
+	iThread = thread::CreateThreadFunction(
+		[this]() {
 #if FL_OS_WINDOWS
-			::CoInitialize( 0 );
+			::CoInitialize(0);
 #endif
 			for(; bLoopFlag.load() ;){
 				float	SleepTime= 0.5f;
 				Status.Set( STATUS_WAITSERVER );
 				RedrawWindow( (HWND)iWindow, nullptr, nullptr, RDW_INVALIDATE|RDW_INTERNALPAINT );
+				ScanController( true );
 				for(; !Connect() && bLoopFlag.load() ;){
 					thread::SleepThread( SleepTime );
 					SleepTime*= 2.0f;
@@ -360,9 +368,10 @@ void	NetworkClient::Start( void* win, const char* host, unsigned int port, const
 				}
 				Status.Set( STATUS_CONNECTED );
 				RedrawWindow( (HWND)iWindow, nullptr, nullptr, RDW_INVALIDATE|RDW_INTERNALPAINT );
-				constexpr double	CLOCK_60FPS= 1.0f/60.0f;
+				constexpr double	CLOCK_60FPS= 1.0/60.0;
 				double	base_clock= time::GetPerfCounter();
 				double	next_clock= base_clock + CLOCK_60FPS;
+				double	prev_clock= -1.0;
 				for(; bLoopFlag.load() ;){
 					auto	clock= time::GetPerfCounter();
 					if( clock >= next_clock ){
@@ -372,9 +381,8 @@ void	NetworkClient::Start( void* win, const char* host, unsigned int port, const
 						}
 						next_clock= clock + CLOCK_60FPS;
 					}else{
-						float	dclock= static_cast<float>( next_clock - clock );
-						if( dclock >= 1.0f/90.0f ){
-							thread::SleepThread( dclock );
+						if( next_clock - clock >= 0.01 ){
+							thread::SleepThread( 0.01f );
 						}else{
 							thread::SleepThread( 0 );
 						}
