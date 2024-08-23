@@ -4,7 +4,7 @@
 #include	<flatlib/core/system/CoreContext.h>
 #include	<flatlib/core/ut/LinearArray.h>
 #include	<flatlib/core/text/LineBuffer.h>
-#include	<flatlib/core/db/DBGLobal.h>
+#include	<flatlib/core/db/DBGlobal.h>
 #include	<flatlib/window/windows/WindowFrame.h>
 #include	"NetworkClient.h"
 #include	<stdio.h>

@@ -2,7 +2,7 @@
 // vim:ts=4 sw=4 noet:
 
 #include	<flatlib/core/system/CoreContext.h>
-#include	<flatlib/core/db/DBGLobal.h>
+#include	<flatlib/core/db/DBGlobal.h>
 #include	"NetworkClient.h"
 #include	<stdio.h>
 
@@ -80,6 +80,8 @@ int main( int argc, char** argv )
 			client.Start( nullptr, Host, Port, PadTableFile, ipv );
 			client.Wait();
 			client.Stop();
+		}else{
+			usage();
 		}
 	}
 	ZRelease( context );

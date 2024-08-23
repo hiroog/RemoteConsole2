@@ -379,7 +379,6 @@ void	NetworkClient::Start( void* win, const char* host, unsigned int port, const
 				constexpr double	CLOCK_60FPS= 1.0/60.0;
 				double	base_clock= time::GetPerfCounter();
 				double	next_clock= base_clock + CLOCK_60FPS;
-				double	prev_clock= -1.0;
 				for(; bLoopFlag.load() ;){
 					auto	clock= time::GetPerfCounter();
 					if( clock >= next_clock ){
