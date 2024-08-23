@@ -5,7 +5,8 @@ ControllerClient/obj/
 ControllerClient/*.exe
 ControllerClient/win32/remote_c.*
 ControllerClient/win32/x64
-ControllerClient/win32/key_log.txt
+ControllerClient/win32/key_log*.txt
+ControllerClient/key_log*.txt
 Tool/Python
 Tool/py/send_command_option.txt
 *.user

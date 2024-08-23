@@ -4,9 +4,9 @@
 #include "RemoteOutputDevice.h"
 #include "RemoteConsoleServer3.h"
 
-#define	RC2_USE_LOWLEVEL_OUTPUT	0
+#define	RC2_USE_LOWLEVEL_OUTPUT_1	0
 
-#if RC2_USE_LOWLEVEL_OUTPUT
+#if RC2_USE_LOWLEVEL_OUTPUT_1
 # include "HAL/PlatformMisc.h"
 #endif
 
@@ -23,7 +23,7 @@ void	FRemoteOutputDevice::Serialize( const TCHAR* Data, ELogVerbosity::Type Verb
 			message.Param1= 0;
 			message.StringParam= FString::Printf( TEXT("%s: %s"), *Category.ToString(), Data );
 			iRemoteServer->PushResult( message );
-#if	RC2_USE_LOWLEVEL_OUTPUT
+#if	RC2_USE_LOWLEVEL_OUTPUT_1
 FPlatformMisc::LowLevelOutputDebugString( *FString::Printf( TEXT("**** %s\n"), *message.StringParam ) );
 #endif
 		}

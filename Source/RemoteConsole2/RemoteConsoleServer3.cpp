@@ -6,9 +6,9 @@
 #include "RemoteOutputDevice.h"
 
 
-#define	RC2_USE_LOWLEVEL_OUTPUT		1
+#define	RC2_USE_LOWLEVEL_OUTPUT_3	1
 
-#if RC2_USE_LOWLEVEL_OUTPUT
+#if RC2_USE_LOWLEVEL_OUTPUT_3
 # include "HAL/PlatformMisc.h"
 #endif
 
@@ -206,7 +206,7 @@ uint32	FRemoteConsoleServer3::Run()
 							data_buffer[data_size]= '\0';
 						}
 
-#if RC2_USE_LOWLEVEL_OUTPUT
+#if RC2_USE_LOWLEVEL_OUTPUT_3
 						FPlatformMisc::LowLevelOutputDebugString( *FString::Printf( TEXT("Server Recv cmd=%d dsize=%d tp=%p\n"), header.Command, header.DataSize, (void*)tptr ) );
 #else
 						UE_LOG( LogRemoteConsole2, Verbose, TEXT("Server Recv cmd=%d dsize=%d"), header.Command, header.DataSize );
@@ -287,7 +287,7 @@ bool	FRemoteConsoleServer3::SendResult( FSocket* sock, DataHeader& result_header
 		data_size= static_cast<uint32_t>( strlen( reinterpret_cast<const char*>(text) ) );
 	}
 	result_header.DataSize= data_size;
-#if RC2_USE_LOWLEVEL_OUTPUT
+#if RC2_USE_LOWLEVEL_OUTPUT_3
 	FPlatformMisc::LowLevelOutputDebugString( *FString::Printf( TEXT("Server Send cmd=%d dsize=%d\n"), result_header.Command, result_header.DataSize ) );
 #else
 	UE_LOG( LogRemoteConsole2, Verbose, TEXT("Server Send cmd=%d dsize=%d"), result_header.Command, result_header.DataSize );

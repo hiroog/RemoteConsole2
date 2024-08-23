@@ -1,6 +1,7 @@
 # UE5 RemoteConsole2 Plugin
 
 UE5 にネットワーク経由でさまざまなコマンドの送信や操作ができます。
+Windows PC 及び Android/Linux で動作確認しています。
 
 
 ## Install 手順
@@ -34,6 +35,7 @@ DefaultEngine.ini でポート番号設定やログ取得の許可ができま�
 
 ```ini
 [RemoteConsolePlugin2]
+bEnabled=true
 bCaptureLog=true
 Port=10101
 IPV=4
