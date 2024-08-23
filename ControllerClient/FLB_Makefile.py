@@ -7,7 +7,7 @@ tool.execScript( os.path.join( genv.FLATLIB, 'build/DefaultSettings.py' ) )
 #------------------------------------------------------------------------------
 
 src_list_base= [
-        'src/main.cpp',
+        'src/linux_main.cpp',
         'src/NetworkClient.cpp',
     ]
 src_list= src_list_base + [
