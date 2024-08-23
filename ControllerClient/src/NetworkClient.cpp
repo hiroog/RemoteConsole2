@@ -433,7 +433,9 @@ void	NetworkClient::Start( void* win, const char* host, unsigned int port, const
 				rec_file.Close();
 			}
 		});
+#endif
 	iThread->Start();
+#if RC2_USE_KEYLOG
 	iRecordingThread->Start();
 #endif
 }
