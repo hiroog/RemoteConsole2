@@ -14,9 +14,17 @@
 #include	<flatlib/core/file/FileSystem.h>
 #include	<flatlib/core/system/CoreContext.h>
 #include	"NetworkClient.h"
+
 #if FL_OS_WINDOWS
 # include	<objbase.h>
 # include	<stdio.h>
+# define	RC2_USE_KEYLOG	1
+#else
+# define	RC2_USE_KEYLOG	0
+#endif
+
+#ifndef RC2_USE_WINDOW
+# define	RC2_USE_WINDOW	1
 #endif
 
 using namespace flatlib;
@@ -196,7 +204,7 @@ bool	NetworkClient::Connect()
 
 void	NetworkClient::Redraw()
 {
-#if FL_OS_WINDOWS && !NO_WINDOW
+#if FL_OS_WINDOWS && RC2_USE_WINDOW
 	RedrawWindow( (HWND)iWindow, nullptr, nullptr, RDW_INVALIDATE|RDW_INTERNALPAINT );
 #endif
 }
@@ -402,6 +410,7 @@ void	NetworkClient::Start( void* win, const char* host, unsigned int port, const
 			::CoUninitialize();
 #endif
 		});
+#if RC2_USE_KEYLOG
 	iRecordingThread= thread::CreateThreadFunction(
 		[this](){
 			ut::StaticArray<Event,EventQueue::QUEUE_SIZE>	event_array;
@@ -426,6 +435,7 @@ void	NetworkClient::Start( void* win, const char* host, unsigned int port, const
 		});
 	iThread->Start();
 	iRecordingThread->Start();
+#endif
 }
 
 input::PadInput*	NetworkClient::GetPad()

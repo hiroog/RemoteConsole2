@@ -18,7 +18,7 @@ TargetName= 'remote_controller_client'
 
 env= tool.createTargetEnvironment()
 env.addLibraries( [ 'flatCore', 'flatInput' ] )
-env.addCCFlags( ['-DNO_WINDOW=1' ] )
+env.addCCFlags( ['-DRC2_USE_WINDOW=0' ] )
 
 if env.getHostPlatform() == 'Windows':
     env.addLibraries( [ 'ws2_32', 'advapi32', 'dinput8', 'dxguid', 'xinput', 'ole32', 'oleaut32' ] )
