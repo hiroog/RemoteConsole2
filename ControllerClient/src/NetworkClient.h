@@ -130,6 +130,7 @@ private:
 	bool	UpdateController( double clock );
 	bool	UpdateKeyboard( double clock );
 	void	FlushEventQueue( flatlib::file::FileHandle& rec_file, flatlib::text::TextPool& pool, flatlib::ut::StaticArray<Event,EventQueue::QUEUE_SIZE>& event_array, uint32_t data_size );
+	void	Redraw();
 public:
 	NetworkClient();
 	~NetworkClient();

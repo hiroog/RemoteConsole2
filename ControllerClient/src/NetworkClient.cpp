@@ -194,6 +194,14 @@ bool	NetworkClient::Connect()
 
 //-----------------------------------------------------------------------------
 
+void	NetworkClient::Redraw()
+{
+#if FL_OS_WINDOWS && !NO_WINDOW
+	RedrawWindow( (HWND)iWindow, nullptr, nullptr, RDW_INVALIDATE|RDW_INTERNALPAINT );
+#endif
+}
+
+
 void	NetworkClient::ScanController( bool update )
 {
 	if( update ){
@@ -207,7 +215,7 @@ void	NetworkClient::ScanController( bool update )
 	}
 	if( controller_count != DeviceCount.Get() ){
 		DeviceCount.Set( controller_count );
-		RedrawWindow( (HWND)iWindow, nullptr, nullptr, RDW_INVALIDATE|RDW_INTERNALPAINT );
+		Redraw();
 	}
 }
 
@@ -234,7 +242,7 @@ bool	NetworkClient::UpdateController( double clock )
 	input::EventStick	data;
 	if( !Input->GetData( 0, data ) ){
 		DeviceCount.Set( 0 );
-		RedrawWindow( (HWND)iWindow, nullptr, nullptr, RDW_INVALIDATE|RDW_INTERNALPAINT );
+		Redraw();
 	}
 	ControllerStatus	status;
 	const float	STICK_SCALE= 32767.0f;
@@ -353,7 +361,7 @@ void	NetworkClient::Start( void* win, const char* host, unsigned int port, const
 			for(; bLoopFlag.load() ;){
 				float	SleepTime= 0.5f;
 				Status.Set( STATUS_WAITSERVER );
-				RedrawWindow( (HWND)iWindow, nullptr, nullptr, RDW_INVALIDATE|RDW_INTERNALPAINT );
+				Redraw();
 				ScanController( true );
 				for(; !Connect() && bLoopFlag.load() ;){
 					thread::SleepThread( SleepTime );
@@ -367,7 +375,7 @@ void	NetworkClient::Start( void* win, const char* host, unsigned int port, const
 					ScanController( true );
 				}
 				Status.Set( STATUS_CONNECTED );
-				RedrawWindow( (HWND)iWindow, nullptr, nullptr, RDW_INVALIDATE|RDW_INTERNALPAINT );
+				Redraw();
 				constexpr double	CLOCK_60FPS= 1.0/60.0;
 				double	base_clock= time::GetPerfCounter();
 				double	next_clock= base_clock + CLOCK_60FPS;
@@ -437,7 +445,7 @@ void	NetworkClient::ToggleRecording()
 		}else{
 			bRecordingFlag.store( true );
 		}
-		RedrawWindow( (HWND)iWindow, nullptr, nullptr, RDW_INVALIDATE|RDW_INTERNALPAINT );
+		Redraw();
 	}
 }
 
