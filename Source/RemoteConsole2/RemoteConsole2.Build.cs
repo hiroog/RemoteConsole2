@@ -14,12 +14,16 @@ namespace UnrealBuildTool.Rules
 					"Core",
 					"CoreUObject",
 					"Engine",
-					"InputCore",
-					"InputDevice",
+					"UMG",
+				});
+			PrivateDependencyModuleNames.AddRange( new string[] {
 					"ApplicationCore",
 					"Networking",
 					"Sockets",
-					"UMG",
+					"InputCore",
+					"InputDevice",
+					"SlateCore",
+					"Slate",
 				});
 		}
 	}

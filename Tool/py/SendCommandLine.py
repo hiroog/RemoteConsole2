@@ -92,18 +92,29 @@ class CommandTool:
     #--------------------------------------------------------------------------
 
     def f_key_down( self, params ):
-        self.console.send_key( params.key, RemoteConsole2API.ConnectionSocket.KEY_DOWN )
+        self.console.send_key( params.key, RemoteConsole2API.Event.KEY_DOWN )
 
     def f_key_up( self, params ):
-        self.console.send_key( params.key, RemoteConsole2API.ConnectionSocket.KEY_UP )
+        self.console.send_key( params.key, RemoteConsole2API.Event.KEY_UP )
 
     def f_key_char( self, params ):
-        self.console.send_key( params.key, RemoteConsole2API.ConnectionSocket.KEY_CHAR )
+        self.console.send_key( params.key, RemoteConsole2API.Event.KEY_CHAR )
+
+    #--------------------------------------------------------------------------
+
+    def f_mouse_down( self, params ):
+        self.console.send_mouse_button( params.key, RemoteConsole2API.Event.MOUSE_DOWN )
+
+    def f_mouse_up( self, params ):
+        self.console.send_mouse_button( params.key, RemoteConsole2API.Event.MOUSE_UP )
+
+    def f_mouse_move( self, params ):
+        self.console.send_mouse_move( params.posx, params.posy )
 
     #--------------------------------------------------------------------------
 
     def f_ui_clicked( self, params ):
-        self.console.send_ui_button( params.widget_name, RemoteConsole2API.ConnectionSocket.UI_BUTTON_CLICKED );
+        self.console.send_ui_button( params.widget_name, RemoteConsole2API.Event.UI_BUTTON_CLICKED );
 
     def f_ui_dump( self, params ):
         self.console.send_ui_dump()
@@ -117,7 +128,7 @@ class CommandTool:
     #--------------------------------------------------------------------------
 
     def get_level_name( self ):
-        return  self.console.send_request_api( RemoteConsole2API.ConnectionSocket.CMD_GET_LEVEL_NAME, 0 )
+        return  self.console.send_request_api( RemoteConsole2API.Event.CMD_GET_LEVEL_NAME, 0 )
 
     def f_level_name( self, params ):
         print( self.get_level_name().get() )
@@ -145,7 +156,7 @@ class CommandTool:
 #------------------------------------------------------------------------------
 
 def usage():
-    print( 'SendCommand v2.10 Hiroyuki Ogasawara' )
+    print( 'SendCommand v2.20 Hiroyuki Ogasawara' )
     print( 'usage: SendCommand [<options>] <cmd>...' )
     print( '  -4                   use ipv4' )
     print( '  -6                   use ipv6' )
@@ -170,6 +181,11 @@ def usage():
     print( '  --key_down <keycode>' )
     print( '  --key_up <keycode>' )
     print( '  --key_char <keycode>' )
+    print( '  --mx <mouse cursor_x>' )
+    print( '  --my <mouse cursor_y>' )
+    print( '  --mouse_move' )
+    print( '  --mouse_down <button>     L,M,R' )
+    print( '  --mouse_up <button>       L,M,R' )
     print( '  --ui_clicked <widget-name>' )
     print( '  --ui_dump' )
     print( '  --focus_ui <widget-name>' )
@@ -199,6 +215,8 @@ class Params( RemoteConsole2API.OptionBase ):
         self.value= 0.0
         self.widget_name= ''
         self.replay= 'key_log.txt'
+        self.posx= 0
+        self.posy= 0
 
 
 def main( argv ):
@@ -206,9 +224,9 @@ def main( argv ):
     acount= len(argv)
     ai= 1
     last_params= None
+    params= Params()
     while ai < acount:
         func= None
-        params= Params()
         arg= argv[ai]
         if arg[0] == '-':
             last_params= None
@@ -222,6 +240,10 @@ def main( argv ):
                 ai= options.set_int( ai, argv, 'port' )
             elif arg == '--timeout':
                 ai= options.set_int( ai, argv, 'timeout' )
+            elif arg == '--mx':
+                ai= params.set_int( ai, argv, 'posx' )
+            elif arg == '--my':
+                ai= params.set_int( ai, argv, 'posy' )
             elif arg == '--on':
                 ai= params.set_str( ai, argv, 'pad_button' )
                 func= 'f_on'
@@ -259,6 +281,14 @@ def main( argv ):
             elif arg == '--key_char':
                 ai= params.set_str( ai, argv, 'key' )
                 func= 'f_key_char'
+            elif arg == '--mouse_down':
+                ai= params.set_str( ai, argv, 'key' )
+                func= 'f_mouse_down'
+            elif arg == '--mouse_up':
+                ai= params.set_str( ai, argv, 'key' )
+                func= 'f_mouse_up'
+            elif arg == '--mouse_move':
+                func= 'f_mouse_move'
             elif arg == '--bg_logger':
                 func= 'f_bg_logger'
             elif arg == '--log_echo':
@@ -302,6 +332,7 @@ def main( argv ):
                 last_params.text+= ' ' + arg
         if func:
             options.func_list.append( (func,params) )
+            params= Params()
         ai+= 1
 
     if options.func_list != []:

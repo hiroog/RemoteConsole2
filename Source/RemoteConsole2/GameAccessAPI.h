@@ -4,14 +4,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blueprint/GameViewportSubsystem.h"
-#include "Components/Widget.h"
 
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
 class FRemoteConsoleServer3;
+class UWidget;
 
 class FGameAccessAPI {
 private:
@@ -37,8 +36,9 @@ public:
 	UWidget*	FindWidget( const TCHAR* widget_name ) const;
 	//!  @param[in]	action	0=clicked, 1=pressed, 2=released, 3=hovered, 4=unhovered
 	void		WidgetButton( const TCHAR* widget_name, uint32_t action );
-	//!  @param[in]	mode	0=game-only, 1=ui-only, 2=game and ui
+	//!  @param[in]	mode	0=game-only, 1=ui-only, 2=game and ui, 3=Window
 	void		SetFocus( const TCHAR* widget_name, uint32_t mode );
+	void		SetWindowFocus( uint32_t mode );
 	//-------------------------------------------------------------------------
 	void		GetCurrentLevelName();
 };

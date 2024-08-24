@@ -34,7 +34,7 @@ DefaultEngine.ini でポート番号設定やログ取得の許可ができま�
 
 
 ```ini
-[RemoteConsolePlugin2]
+[RemoteConsole2Plugin]
 bEnabled=true
 bCaptureLog=true
 Port=10101

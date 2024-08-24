@@ -240,7 +240,7 @@ inline float	Clamp_Internal( float value )
 
 bool	NetworkClient::UpdateController( double clock )
 {
-	if( UpdateCounter++ >= 60 * 2 ){
+	if( UpdateCounter++ >= 60 * 1 ){
 		if( DeviceCount.Get() == 0 ){
 			ScanController();
 		}

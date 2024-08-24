@@ -4,6 +4,8 @@
 #include "RemoteConsoleServer3.h"
 #include "RemoteConsole2.h"
 #include "RemoteOutputDevice.h"
+#include "Networking.h"
+#include "SocketSubsystem.h"
 
 
 #define	RC2_USE_LOWLEVEL_OUTPUT_3	1
@@ -205,12 +207,13 @@ uint32	FRemoteConsoleServer3::Run()
 							}
 							data_buffer[data_size]= '\0';
 						}
-
+						if( header.Command != CMD_CONTROLLER ){
 #if RC2_USE_LOWLEVEL_OUTPUT_3
-						FPlatformMisc::LowLevelOutputDebugString( *FString::Printf( TEXT("Server Recv cmd=%d dsize=%d tp=%p\n"), header.Command, header.DataSize, (void*)tptr ) );
+							FPlatformMisc::LowLevelOutputDebugString( *FString::Printf( TEXT("Server Recv cmd=%d dsize=%d tp=%p\n"), header.Command, header.DataSize, (void*)tptr ) );
 #else
-						UE_LOG( LogRemoteConsole2, Verbose, TEXT("Server Recv cmd=%d dsize=%d"), header.Command, header.DataSize );
+							UE_LOG( LogRemoteConsole2, Verbose, TEXT("Server Recv cmd=%d dsize=%d"), header.Command, header.DataSize );
 #endif
+						}
 						switch( header.Command ){
 						case CMD_NOP:
 							break;
@@ -226,6 +229,7 @@ uint32	FRemoteConsoleServer3::Run()
 							case CMD_CONTROLLER:
 								has_controller_cmd= true;
 								break;
+							case CMD_MOUSE:
 							case CMD_KEYBOARD:
 								has_keyboard_cmd= true;
 								break;
@@ -329,9 +333,7 @@ bool	FRemoteConsoleServer3::CommandExec( FSocket* sock, const DataHeader& header
 		if( header.DataSize == 0 ){
 			TArray<FConsoleMessageQueue::Message>	result_array;
 			for(; !bStopRequest.load() ;){
-FPlatformMisc::LowLevelOutputDebugString( *FString::Printf( TEXT("*** WaitMessage\n") ) );
 				if( ResultBuffer.WaitMessage( result_array, 1.0f ) ){
-FPlatformMisc::LowLevelOutputDebugString( *FString::Printf( TEXT("*** Get Message num=%d\n"), result_array.Num() ) );
 					DataHeader	result_header;
 					memset( &result_header, 0, sizeof(result_header) );
 					result_header.Magic= 0x70198fb3;
@@ -358,18 +360,19 @@ FPlatformMisc::LowLevelOutputDebugString( *FString::Printf( TEXT("*** Get Messag
 			UE_LOG( LogRemoteConsole2, Error, TEXT("RemoteConsoleServer2: Read Console Status size unmatch dsize=%d"), header.DataSize );
 		}
 		return	false;
+	case CMD_MOUSE:
 	case CMD_KEYBOARD:
 		if( header.DataSize == 0 ){
 			KeyboardStatus	key;
-			key.KeyCode=  header.Param1 & 0xffff;
-			key.CharCode= header.Param1 >> 16;
-			key.Down= 	  header.Param0;
+			key.KeyCode=  header.Param1 & 0xffff;	// or X
+			key.CharCode= header.Param1 >> 16;		// or Y
+			key.Action=   header.Param0;
 			KeyboardLock.Lock();
 			KeyboardBuffer.Add( key );
 			bIsKeyboardOnline.store( true );
 			KeyboardLock.Unlock();
 		}else{
-			UE_LOG( LogRemoteConsole2, Error, TEXT("RemoteConsoleServer2: Keyboard Status size unmatch dsize=%d"), header.DataSize );
+			UE_LOG( LogRemoteConsole2, Error, TEXT("RemoteConsoleServer2: Keyboard/Mouse Status size unmatch dsize=%d"), header.DataSize );
 		}
 		return	true;
 	default:

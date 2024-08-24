@@ -5,6 +5,7 @@
 #include "InputCoreTypes.h"
 #include "RemoteConsole2.h"
 #include "GameAccessAPI.h"
+#include "Framework/Application/SlateApplication.h"
 
 
 //-----------------------------------------------------------------------------
@@ -19,10 +20,24 @@ FRemoteInputDevice::FRemoteInputDevice( const TSharedRef<FGenericApplicationMess
 	int	Port= 10101;
 	int	IPV= 4;
 	if( GConfig ){
-		GConfig->GetBool( TEXT("RemoteConsolePlugin2"), TEXT("bEnabled"), bEnabled, GEngineIni );
-		GConfig->GetBool( TEXT("RemoteConsolePlugin2"), TEXT("bCaptureLog"), bCaptureLog, GEngineIni );
-		GConfig->GetInt( TEXT("RemoteConsolePlugin2"), TEXT("Port"), Port, GEngineIni );
-		GConfig->GetInt( TEXT("RemoteConsolePlugin2"), TEXT("IPV"),  IPV,  GEngineIni );
+		const FConfigFile*	engine_file= GConfig->Find( GEngineIni );
+		if( engine_file ){
+			static const TCHAR*	section_name_list[]= {
+				TEXT("RemoteConsole2Plugin"),
+				TEXT("RemoteConsolePlugin2"),
+				TEXT("RemoteControllerPlugin"),
+			};
+			for( unsigned int pi= 0 ; pi< sizeof(section_name_list)/sizeof(TCHAR*) ; pi++ ){
+				const TCHAR*	section_name= section_name_list[pi];
+				if( engine_file->FindSection( section_name ) ){
+					engine_file->GetBool( section_name, TEXT("bEnabled"),    bEnabled     );
+					engine_file->GetBool( section_name, TEXT("bCaptureLog"), bCaptureLog  );
+					engine_file->GetInt(  section_name, TEXT("Port"),        Port         );
+					engine_file->GetInt(  section_name, TEXT("IPV"),         IPV          );
+					break;
+				}
+			}
+		}
 	}
 
 	const auto&	mapper= IPlatformInputDeviceMapper::Get();
@@ -270,14 +285,16 @@ void	FRemoteInputDevice::SendControllerEvents()
 	PrevStatus= status;
 
 
-	// Keyboard
+	// Keyboard / Mouse
 	if( Server.GetKeyboardStatus( KeyboardStatusBuffer ) ){
+		check( sizeof(FRemoteConsoleServer3::KeyboardStatus) == sizeof(FRemoteConsoleServer3::MouseStatus) );
 		// Online
 		auto	buffer_size= KeyboardStatusBuffer.Num();
 		for( int i= 0 ; i< buffer_size ; i++ ){
 			const auto&	key= KeyboardStatusBuffer[i];
-			bool	repeat= (key.Down & 0x80) != 0;
-			switch( key.Down ){
+			const auto*	mouse= reinterpret_cast<const FRemoteConsoleServer3::MouseStatus*>( &key );
+			bool	repeat= (key.Action & FRemoteConsoleServer3::KEY_REPEAT) != 0;
+			switch( key.Action & FRemoteConsoleServer3::KEY_ACTION_MASK ){
 			case FRemoteConsoleServer3::KEY_CHAR:
 				MessageHandler->OnKeyChar( key.CharCode, repeat );
 				break;
@@ -292,7 +309,44 @@ void	FRemoteInputDevice::SendControllerEvents()
 				MessageHandler->OnKeyUp( key.KeyCode, key.CharCode, repeat );
 				ResetKeycodeState( key.KeyCode );
 				break;
+			case FRemoteConsoleServer3::MOUSE_DOWN:
+				if( GEngine && GEngine->GameViewport ){
+					TSharedPtr<SWindow>	window= GEngine->GameViewport->GetWindow();
+					if( window ){
+						MessageHandler->OnMouseDown( window->GetNativeWindow(), static_cast<EMouseButtons::Type>(mouse->Button) );
+					}
+				}
+				break;
+			case FRemoteConsoleServer3::MOUSE_UP:
+				MessageHandler->OnMouseUp( static_cast<EMouseButtons::Type>(mouse->Button) );
+				break;
+			case FRemoteConsoleServer3::MOUSE_MOVE_RAW:
+				MessageHandler->OnRawMouseMove( mouse->CursorX, mouse->CursorY );
+				break;
+			case FRemoteConsoleServer3::MOUSE_MOVE:
+				{
+					int32	posx= 0;
+					int32	posy= 0;
+					if( GEngine && GEngine->GameViewport ){
+						TSharedPtr<SWindow>	window= GEngine->GameViewport->GetWindow();
+						if( window ){
+							TSharedPtr<FGenericWindow>	native= window->GetNativeWindow();
+							int32	width= 0;
+							int32	height= 0;
+							native->GetRestoredDimensions( posx, posy, width, height );
+							int32	border_size= native->GetWindowBorderSize();
+							int32	titlebar_size= native->GetWindowTitleBarSize();
+							posx+= border_size;
+							posy+= border_size + titlebar_size;
+						}
+					}
+					auto&	app= FSlateApplication::Get();
+					app.SetCursorPos( FVector2D( mouse->CursorX + posx, mouse->CursorY + posy ) );
+					MessageHandler->OnMouseMove();
+				}
+				break;
 			}
+
 		}
 	}else{
 		// Offline

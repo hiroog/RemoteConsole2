@@ -14,7 +14,7 @@ src_list= src_list_base + [
     ]
 
 
-TargetName= 'remote_controller_client'
+TargetName= 'remote_client'
 
 env= tool.createTargetEnvironment()
 env.addLibraries( [ 'flatCore', 'flatInput' ] )

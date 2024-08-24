@@ -9,8 +9,9 @@
 #include "Kismet/GameplayStatics.h"
 #include "RemoteConsole2.h"
 #include "RemoteConsoleServer3.h"
+#include "Components/Widget.h"
+#include "Blueprint/GameViewportSubsystem.h"
 
-//#include "Blueprint/GameViewportSubsystem.h"
 //#include "Delegates/DelegateCombinations.h"
 //#include "Delegates/IDelegateInterface.h"
 //#include "Engine/GameViewportClient.h"
@@ -167,6 +168,7 @@ UWidget*	FGameAccessAPI::FindWidget( UWidget* root_widget, const TCHAR* widget_n
 
 UWidget*	FGameAccessAPI::FindWidget( const TCHAR* widget_name ) const
 {
+	check( widget_name != nullptr );
 	UE_LOG(LogRemoteConsole2,Verbose,TEXT("RemoteConsole2:FindWidget %s"), widget_name );
 	if( !GWorld ){
 		return	nullptr;
@@ -205,6 +207,7 @@ UWidget*	FGameAccessAPI::FindWidget( const TCHAR* widget_name ) const
 
 void	FGameAccessAPI::WidgetButton( const TCHAR* widget_name, uint32_t action )
 {
+	check( widget_name != nullptr );
 	UE_LOG(LogRemoteConsole2,Verbose,TEXT("RemoteConsole2:WidgetButton %s"), widget_name );
 	if( GWorld ){
 		auto*	widget= FindWidget( widget_name );
@@ -243,6 +246,7 @@ void	FGameAccessAPI::WidgetButton( const TCHAR* widget_name, uint32_t action )
 
 void	FGameAccessAPI::SetFocus( const TCHAR* widget_name, uint32_t mode )
 {
+	check( widget_name != nullptr );
 	UE_LOG(LogRemoteConsole2,Verbose,TEXT("RemoteConsole2:SetFocus %s"), widget_name );
 	bool	result= false;
 	if( GWorld ){
@@ -270,11 +274,45 @@ void	FGameAccessAPI::SetFocus( const TCHAR* widget_name, uint32_t mode )
 					UWidgetBlueprintLibrary::SetInputMode_GameAndUIEx( controller, widget );
 					result= true;
 					break;
+				case FRemoteConsoleServer3::UI_FOCUS_WINDOW:
+					SetWindowFocus( 0 );
+					result= true;
+					break;
 				}
 			}
 		}
 	}
 	OutputResult( TEXT("FocusResult"), result ? TEXT("1"):TEXT("0") );
+}
+
+
+//-----------------------------------------------------------------------------
+
+void	FGameAccessAPI::SetWindowFocus( uint32_t mode )
+{
+	UE_LOG(LogRemoteConsole2,Verbose,TEXT("RemoteConsole2:SetWindowFocus %d"), mode );
+	bool	result= false;
+	if( GEngine && GEngine->GameViewport ){
+		TSharedPtr<SWindow> Window= GEngine->GameViewport->GetWindow();
+		if( Window ){
+			TSharedPtr<FGenericWindow>	native= Window->GetNativeWindow();
+			switch( mode ){
+			default:
+			case 0:
+				native->SetWindowFocus();
+				break;
+			case 1:
+				native->BringToFront( true );
+				break;
+			case 2:
+				//native->HACK_ForceToFront();
+				break;
+			case 3:
+				native->Enable( true );
+				break;
+			}
+		}
+	}
 }
 
 

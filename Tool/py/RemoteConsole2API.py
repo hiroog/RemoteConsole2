@@ -86,7 +86,7 @@ class SCC_Error( Exception ):
         return  self.message
 
 
-class ConnectionSocket:
+class Event:
     CMD_CLOSE        =   2
     CMD_CONTROLLER   =   257
     CMD_KEYBOARD     =   258
@@ -100,10 +100,17 @@ class ConnectionSocket:
     CMD_UI_BUTTON    =   516
     CMD_UI_FOCUS     =   517
     CMD_GET_LEVEL_NAME=  518
+    CMD_GET_CONSOLE_VAR= 519
 
     KEY_UP      =   0
     KEY_DOWN    =   1
     KEY_CHAR    =   2
+    MOUSE_UP    =   8
+    MOUSE_DOWN  =   9
+    MOUSE_DCLICK=   10
+    MOUSE_WHEEL =   11
+    MOUSE_MOVE_RAW= 12
+    MOUSE_MOVE  =   13
 
     UI_BUTTON_CLICKED  =   0
     UI_BUTTON_PRESSED  =   1
@@ -114,6 +121,10 @@ class ConnectionSocket:
     UI_FOCUS_GAMEONLY =   0
     UI_FOCUS_UIONLY   =   1
     UI_FOCUS_GAMEANDUI=   2
+    UI_FOCUS_WINDOW   =   3
+
+
+class ConnectionSocket:
 
     def __init__( self, sock, addr ):
         self.addr= addr
@@ -223,10 +234,13 @@ class ConnectionSocket:
 
     def sendController( self, controller ):
         button_binary= struct.pack( '<6HI', controller.stick[0], controller.stick[1], controller.stick[2], controller.stick[3], controller.stick[4], controller.stick[5], controller.button_bit )
-        self.sendCommand( self.CMD_CONTROLLER, button_binary )
+        self.sendCommand( Event.CMD_CONTROLLER, button_binary )
 
-    def sendKeyboard( self, key_code, char_code, down ):
-        self.sendCommand( self.CMD_KEYBOARD, None, down, (char_code<<16)|key_code );
+    def sendKeyboard( self, key_code, char_code, action ):
+        self.sendCommand( Event.CMD_KEYBOARD, None, action, (char_code<<16)|key_code );
+
+    def sendMouse( self, button, action, cursor_x, cursor_y ):
+        self.sendCommand( Event.CMD_MOUSE, None, (button<<8)|action, (cursor_y<<16)|(cursor_x&0xffff) );
 
     def close( self ):
         if self.sock:
@@ -305,13 +319,13 @@ class BackgroundLogger(threading.Thread):
     #--------------------------------------------------------------------------
 
     def command_exec( self, command, param0, param1, binary ):
-        if command == ConnectionSocket.CMD_RETURN_LOG:
+        if command == Event.CMD_RETURN_LOG:
             text= binary.decode( 'utf-8', 'ignore' )
             self.push_line( (self.log_index,text) )
             self.log_index+= 1
             if self.options.log_echo:
                 print( '%s' % text )
-        elif command == ConnectionSocket.CMD_RETURN_STRING:
+        elif command == Event.CMD_RETURN_STRING:
             text= binary.decode( 'utf-8', 'ignore' )
             if self.options.net_echo:
                 self.print( 'Return String "%s" %d %d' % (text, param0, param1) )
@@ -323,13 +337,13 @@ class BackgroundLogger(threading.Thread):
 
     def run( self ):
         while self.loop_flag:
-            self.print( 'logger: waiting for server' )
+            self.print( 'logger: waiting' )
             try:
                 with ConnectionSocket.createAndConnect( self.options.host, self.options.port, self.options.ipv ) as self.sock:
                     self.print( 'logger: connected' )
                     self.sock.set_echo( self.options.net_echo )
                     try:
-                        self.sock.sendCommand( ConnectionSocket.CMD_RECV_SERVER, None )
+                        self.sock.sendCommand( Event.CMD_RECV_SERVER, None )
                     except SCC_Error as e:
                         break
                     while self.loop_flag:
@@ -408,6 +422,13 @@ class ConsoleAPI:
             'RIGHT'  : 0x27,
             'DOWN'   : 0x28,
         }
+    MOUSE_MAP= {
+            'L' :   0,
+            'M' :   1,
+            'R' :   2,
+            'T1':   3,
+            'T2':   4,
+        }
 
     def __init__( self, options ):
         self.options= options
@@ -434,7 +455,7 @@ class ConsoleAPI:
         print( *msg, flush=True )
 
     def connect( self ):
-        self.print( 'waiting for server' )
+        self.print( 'waiting' )
         self.sock= ConnectionSocket.createAndConnect( self.options.host, self.options.port, self.options.ipv, self.options.timeout/2 )
         self.sock.set_echo( self.options.net_echo )
         self.print( 'connected' )
@@ -457,15 +478,15 @@ class ConsoleAPI:
     #--------------------------------------------------------------------------
 
     def send_close( self ):
-        self.sock.sendCommand( ConnectionSocket.CMD_CLOSE, None )
+        self.sock.sendCommand( Event.CMD_CLOSE, None )
 
     def send_console_command( self, command ):
         self.print( 'cmd:console command "%s"' % command )
-        self.sock.sendTextCommand( ConnectionSocket.CMD_CONSOLE_CMD, command )
+        self.sock.sendTextCommand( Event.CMD_CONSOLE_CMD, command )
 
     def print_string( self, text ):
         self.print( 'cmd:print string "%s"' % text )
-        self.sock.sendTextCommand( ConnectionSocket.CMD_PRINT_LOG, text )
+        self.sock.sendTextCommand( Event.CMD_PRINT_LOG, text )
 
     def wait_log( self, text, baseid= 0 ):
         self.print( 'cmd:wait log "%s"' % text )
@@ -496,25 +517,35 @@ class ConsoleAPI:
         key_code= self.get_keycode( key_name )
         self.sock.sendKeyboard( key_code, key_code, action )
 
+    def send_mouse_button( self, button, action ):
+        self.print( 'cmd:send mouse %s (%d)' % (button, action) )
+        self.sock.sendMouse( self.MOUSE_MAP[button], action, 0, 0 )
+
+    def send_mouse_move( self, cursor_x, cursor_y ):
+        self.print( 'cmd:send mouse move (%d,%d)' % (cursor_x, cursor_y) )
+        self.sock.sendMouse( 0, Event.MOUSE_MOVE, cursor_x, cursor_y )
+
     #--------------------------------------------------------------------------
 
     def send_ui_button( self, widget_name, action ):
         self.print( 'cmd:ui button %s (%d)' % (widget_name, action) )
-        self.sock.sendTextCommand( ConnectionSocket.CMD_UI_BUTTON, widget_name, action, 0 );
+        self.sock.sendTextCommand( Event.CMD_UI_BUTTON, widget_name, action, 0 );
 
     def send_ui_dump( self ):
         self.print( 'cmd:ui dump' )
-        self.sock.sendCommand( ConnectionSocket.CMD_UI_DUMP, None, 0, 0 );
+        self.sock.sendCommand( Event.CMD_UI_DUMP, None, 0, 0 );
 
     #--------------------------------------------------------------------------
 
     def set_focus( self, widget_name= None ):
         if widget_name is not None:
             self.print( 'cmd:focus ui-only %s' % widget_name )
-            self.sock.sendTextCommand( ConnectionSocket.CMD_UI_FOCUS, widget_name, ConnectionSocket.UI_FOCUS_UIONLY, 0 );
+            self.sock.sendCommand( Event.CMD_UI_FOCUS, None, Event.UI_FOCUS_WINDOW, 0 );
+            self.sock.sendTextCommand( Event.CMD_UI_FOCUS, widget_name, Event.UI_FOCUS_UIONLY, 0 );
         else:
             self.print( 'cmd:focus game-only' )
-            self.sock.sendCommand( ConnectionSocket.CMD_UI_FOCUS, None, ConnectionSocket.UI_FOCUS_GAMEONLY, 0 );
+            self.sock.sendCommand( Event.CMD_UI_FOCUS, None, Event.UI_FOCUS_WINDOW, 0 );
+            self.sock.sendCommand( Event.CMD_UI_FOCUS, None, Event.UI_FOCUS_GAMEONLY, 0 );
 
     #--------------------------------------------------------------------------
 
@@ -525,7 +556,7 @@ class ConsoleAPI:
 
     def get_level_name( self ):
         self.print( 'cmd:get level name' )
-        return  self.send_request_api( ConnectionSocket.CMD_GET_LEVEL_NAME, 0 )
+        return  self.send_request_api( Event.CMD_GET_LEVEL_NAME, 0 )
 
     #--------------------------------------------------------------------------
 
