@@ -293,8 +293,9 @@ void	FRemoteInputDevice::SendControllerEvents()
 		for( int i= 0 ; i< buffer_size ; i++ ){
 			const auto&	key= KeyboardStatusBuffer[i];
 			const auto*	mouse= reinterpret_cast<const FRemoteConsoleServer3::MouseStatus*>( &key );
-			bool	repeat= (key.Action & FRemoteConsoleServer3::KEY_REPEAT) != 0;
-			switch( key.Action & FRemoteConsoleServer3::KEY_ACTION_MASK ){
+			bool		repeat= (key.Action & FRemoteConsoleServer3::KEY_REPEAT) != 0;
+			uint32_t	action= key.Action & FRemoteConsoleServer3::KEY_ACTION_MASK;
+			switch( action ){
 			case FRemoteConsoleServer3::KEY_CHAR:
 				MessageHandler->OnKeyChar( key.CharCode, repeat );
 				break;
@@ -309,21 +310,26 @@ void	FRemoteInputDevice::SendControllerEvents()
 				MessageHandler->OnKeyUp( key.KeyCode, key.CharCode, repeat );
 				ResetKeycodeState( key.KeyCode );
 				break;
+			case FRemoteConsoleServer3::MOUSE_DOUBLE_CLICK:
 			case FRemoteConsoleServer3::MOUSE_DOWN:
 				if( GEngine && GEngine->GameViewport ){
 					TSharedPtr<SWindow>	window= GEngine->GameViewport->GetWindow();
 					if( window ){
-						MessageHandler->OnMouseDown( window->GetNativeWindow(), static_cast<EMouseButtons::Type>(mouse->Button) );
+						if( action == FRemoteConsoleServer3::MOUSE_DOWN ){
+							MessageHandler->OnMouseDown( window->GetNativeWindow(), static_cast<EMouseButtons::Type>(mouse->Button) );
+						}else{
+							MessageHandler->OnMouseDoubleClick( window->GetNativeWindow(), static_cast<EMouseButtons::Type>(mouse->Button) );
+						}
 					}
 				}
 				break;
 			case FRemoteConsoleServer3::MOUSE_UP:
 				MessageHandler->OnMouseUp( static_cast<EMouseButtons::Type>(mouse->Button) );
 				break;
-			case FRemoteConsoleServer3::MOUSE_MOVE_RAW:
+			case FRemoteConsoleServer3::MOUSE_MOVE:
 				MessageHandler->OnRawMouseMove( mouse->CursorX, mouse->CursorY );
 				break;
-			case FRemoteConsoleServer3::MOUSE_MOVE:
+			case FRemoteConsoleServer3::MOUSE_SETPOS:
 				{
 					int32	posx= 0;
 					int32	posy= 0;
@@ -425,6 +431,11 @@ void	FRemoteInputDevice::ExecGameAPI()
 			case FRemoteConsoleServer3::CMD_UI_FOCUS:
 				if( iGameAPI ){
 					iGameAPI->SetFocus( *command.StringParam, command.Param0 );
+				}
+				break;
+			case FRemoteConsoleServer3::CMD_GET_CONSOLE_VAR:
+				if( iGameAPI ){
+					iGameAPI->GetConsoleVar( *command.StringParam );
 				}
 				break;
 			default:

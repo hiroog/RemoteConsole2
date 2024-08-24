@@ -62,8 +62,8 @@ public:
 		MOUSE_DOWN,
 		MOUSE_DOUBLE_CLICK,
 		MOUSE_WHEEL,
-		MOUSE_MOVE_RAW,
 		MOUSE_MOVE,
+		MOUSE_SETPOS,
 		KEY_REPEAT		=	0x80,
 		KEY_ACTION_MASK	=	0x7f,
 	};
@@ -90,6 +90,8 @@ public:
 		UI_FOCUS_UIONLY,
 		UI_FOCUS_GAMEANDUI,
 		UI_FOCUS_WINDOW,
+		UI_FOCUS_BTOF,
+		UI_FOCUS_BTOF2,
 	};
 	struct CaptureStatus {
 		ControllerStatus	Status;

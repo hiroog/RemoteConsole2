@@ -278,6 +278,14 @@ void	FGameAccessAPI::SetFocus( const TCHAR* widget_name, uint32_t mode )
 					SetWindowFocus( 0 );
 					result= true;
 					break;
+				case FRemoteConsoleServer3::UI_FOCUS_BTOF:
+					SetWindowFocus( 1 );
+					result= true;
+					break;
+				case FRemoteConsoleServer3::UI_FOCUS_BTOF2:
+					SetWindowFocus( 2 );
+					result= true;
+					break;
 				}
 			}
 		}
@@ -305,7 +313,7 @@ void	FGameAccessAPI::SetWindowFocus( uint32_t mode )
 				native->BringToFront( true );
 				break;
 			case 2:
-				//native->HACK_ForceToFront();
+				native->HACK_ForceToFront();
 				break;
 			case 3:
 				native->Enable( true );
@@ -324,6 +332,18 @@ void	FGameAccessAPI::GetCurrentLevelName()
 		FString	level_name= UGameplayStatics::GetCurrentLevelName( GWorld, true );
 		OutputResult( TEXT("Level"), *level_name );
 		SendResult( *level_name );
+	}
+}
+
+
+//-----------------------------------------------------------------------------
+
+void	FGameAccessAPI::GetConsoleVar( const TCHAR* var_name )
+{
+	auto*	cvar= IConsoleManager::Get().FindConsoleVariable( var_name );
+	if( cvar ){
+		OutputResult( var_name, *cvar->GetString() );
+		SendResult( *cvar->GetString() );
 	}
 }
 

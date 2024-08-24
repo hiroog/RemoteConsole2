@@ -111,6 +111,9 @@ class CommandTool:
     def f_mouse_move( self, params ):
         self.console.send_mouse_move( params.posx, params.posy )
 
+    def f_mouse_setpos( self, params ):
+        self.console.send_mouse_setpos( params.posx, params.posy )
+
     #--------------------------------------------------------------------------
 
     def f_ui_clicked( self, params ):
@@ -127,11 +130,11 @@ class CommandTool:
 
     #--------------------------------------------------------------------------
 
-    def get_level_name( self ):
-        return  self.console.send_request_api( RemoteConsole2API.Event.CMD_GET_LEVEL_NAME, 0 )
-
     def f_level_name( self, params ):
-        print( self.get_level_name().get() )
+        print( self.console.get_level_name().get() )
+
+    def f_get_var( self, params ):
+        print( self.console.get_console_var( params.text ).get() )
 
     #--------------------------------------------------------------------------
 
@@ -156,7 +159,7 @@ class CommandTool:
 #------------------------------------------------------------------------------
 
 def usage():
-    print( 'SendCommand v2.20 Hiroyuki Ogasawara' )
+    print( 'SendCommand v2.30 Hiroyuki Ogasawara' )
     print( 'usage: SendCommand [<options>] <cmd>...' )
     print( '  -4                   use ipv4' )
     print( '  -6                   use ipv6' )
@@ -191,6 +194,7 @@ def usage():
     print( '  --focus_ui <widget-name>' )
     print( '  --focus_game' )
     print( '  --level_name' )
+    print( '  --get_var <var-name>' )
     print( '  --wait_log <text>' )
     print( '  --bg_logger          start logging thread' )
     print( '  --replay <replay_file>' )
@@ -289,6 +293,8 @@ def main( argv ):
                 func= 'f_mouse_up'
             elif arg == '--mouse_move':
                 func= 'f_mouse_move'
+            elif arg == '--mouse_setpos':
+                func= 'f_mouse_setpos'
             elif arg == '--bg_logger':
                 func= 'f_bg_logger'
             elif arg == '--log_echo':
@@ -322,6 +328,9 @@ def main( argv ):
             elif arg == '--replay':
                 ai= params.set_str( ai, argv, 'replay' )
                 func= 'f_replay'
+            elif arg == '--get_var':
+                ai= params.set_str( ai, argv, 'text' )
+                func= 'f_get_var'
             elif arg == '--decode':
                 ai= params.set_str( ai, argv, 'replay' )
                 func= 'f_decode'

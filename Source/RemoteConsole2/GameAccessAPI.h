@@ -41,6 +41,7 @@ public:
 	void		SetWindowFocus( uint32_t mode );
 	//-------------------------------------------------------------------------
 	void		GetCurrentLevelName();
+	void		GetConsoleVar( const TCHAR* var_name );
 };
 
 

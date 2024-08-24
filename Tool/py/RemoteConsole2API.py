@@ -109,8 +109,8 @@ class Event:
     MOUSE_DOWN  =   9
     MOUSE_DCLICK=   10
     MOUSE_WHEEL =   11
-    MOUSE_MOVE_RAW= 12
-    MOUSE_MOVE  =   13
+    MOUSE_MOVE  =   12
+    MOUSE_SETPOS=   13
 
     UI_BUTTON_CLICKED  =   0
     UI_BUTTON_PRESSED  =   1
@@ -122,6 +122,8 @@ class Event:
     UI_FOCUS_UIONLY   =   1
     UI_FOCUS_GAMEANDUI=   2
     UI_FOCUS_WINDOW   =   3
+    UI_FOCUS_BTOF     =   4
+    UI_FOCUS_BTOF2    =   5
 
 
 class ConnectionSocket:
@@ -525,6 +527,10 @@ class ConsoleAPI:
         self.print( 'cmd:send mouse move (%d,%d)' % (cursor_x, cursor_y) )
         self.sock.sendMouse( 0, Event.MOUSE_MOVE, cursor_x, cursor_y )
 
+    def send_mouse_setpos( self, cursor_x, cursor_y ):
+        self.print( 'cmd:send mouse setpos (%d,%d)' % (cursor_x, cursor_y) )
+        self.sock.sendMouse( 0, Event.MOUSE_SETPOS, cursor_x, cursor_y )
+
     #--------------------------------------------------------------------------
 
     def send_ui_button( self, widget_name, action ):
@@ -537,14 +543,18 @@ class ConsoleAPI:
 
     #--------------------------------------------------------------------------
 
-    def set_focus( self, widget_name= None ):
+    def set_focus( self, widget_name= None, force= False ):
         if widget_name is not None:
             self.print( 'cmd:focus ui-only %s' % widget_name )
             self.sock.sendCommand( Event.CMD_UI_FOCUS, None, Event.UI_FOCUS_WINDOW, 0 );
+            if force:
+                self.sock.sendCommand( Event.CMD_UI_FOCUS, None, Event.UI_FOCUS_BTOF2, 0 );
             self.sock.sendTextCommand( Event.CMD_UI_FOCUS, widget_name, Event.UI_FOCUS_UIONLY, 0 );
         else:
             self.print( 'cmd:focus game-only' )
             self.sock.sendCommand( Event.CMD_UI_FOCUS, None, Event.UI_FOCUS_WINDOW, 0 );
+            if force:
+                self.sock.sendCommand( Event.CMD_UI_FOCUS, None, Event.UI_FOCUS_BTOF2, 0 );
             self.sock.sendCommand( Event.CMD_UI_FOCUS, None, Event.UI_FOCUS_GAMEONLY, 0 );
 
     #--------------------------------------------------------------------------
@@ -554,9 +564,18 @@ class ConsoleAPI:
         self.sock.sendCommand( command, None, param0, key );
         return  Feature( self.logger, key )
 
+    def send_request_api_text( self, command, param0, text ):
+        key= self.sock.alloc_key()
+        self.sock.sendTextCommand( command, text, param0, key );
+        return  Feature( self.logger, key )
+
     def get_level_name( self ):
         self.print( 'cmd:get level name' )
         return  self.send_request_api( Event.CMD_GET_LEVEL_NAME, 0 )
+
+    def get_console_var( self, var_name ):
+        self.print( 'cmd:get console var "%s"' % var_name )
+        return  self.send_request_api_text( Event.CMD_GET_CONSOLE_VAR, 0, var_name )
 
     #--------------------------------------------------------------------------
 
