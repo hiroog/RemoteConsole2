@@ -268,6 +268,7 @@ uint32	FRemoteConsoleServer3::Run()
 
 		CheckRelease();
 	}
+	StopConnection();
 	listen_sock->Close();
 	//SocketSubsystem= ISocketSubsystem::Get( PLATFORM_SOCKETSUBSYSTEM );
 	SocketSubsystem->DestroySocket( listen_sock );
@@ -430,7 +431,6 @@ void	FRemoteConsoleServer3::StopServer()
 {
 	bServerLoop.store( false );
 	bStopRequest.store( true );
-	StopConnection();
 	if( iThread ){
 		iThread->WaitForCompletion();
 		delete iThread;

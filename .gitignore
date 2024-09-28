@@ -9,4 +9,5 @@ ControllerClient/win32/key_log*.txt
 ControllerClient/key_log*.txt
 Tool/Python
 Tool/py/send_command_option.txt
+Tool/send_command_option.txt
 *.user
