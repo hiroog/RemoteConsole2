@@ -302,6 +302,7 @@ class BackgroundLogger(threading.Thread):
         self.result_lock= threading.Lock()
         self.result_event= threading.Event()
         self.log_index= 0
+        self.base_index= 0
         self.result= {}
         self.loop_flag= True
 
@@ -400,27 +401,27 @@ class BackgroundLogger(threading.Thread):
 
     def get_index( self ):
         with self.log_lock:
-            return  self.log_index
+            return  self.base_index
 
     def set_index( self, index ):
         with self.log_lock:
-            self.log_index= index
+            self.base_index= index
 
-    def find_log( self, pattern, base_index ):
+    def find_log( self, pattern ):
         with self.log_lock:
             for index,line in self.log_queue:
-                if index>= base_index:
+                if index>= self.base_index:
                     pat= pattern.search( line )
                     if pat:
                         self.log_event.clear()
+                        self.base_index= index+1
                         return  pat,index
-        return  None,base_index
+        return  None,self.base_index
 
     def wait_log( self, pattern ):
         while self.loop_flag:
-            pat,index= self.find_log( pattern, self.log_index )
+            pat,_= self.find_log( pattern )
             if pat:
-                self.log_index= index+1
                 return  pat
             if self.log_event.wait( self.options.timeout ):
                 time.sleep( 0.01 )
