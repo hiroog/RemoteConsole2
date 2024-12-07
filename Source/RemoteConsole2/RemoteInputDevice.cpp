@@ -420,7 +420,7 @@ void	FRemoteInputDevice::ExecGameAPI()
 				break;
 			case FRemoteConsoleServer3::CMD_UI_DUMP:
 				if( iGameAPI ){
-					iGameAPI->DumpWidget();
+					iGameAPI->DumpWidget( command.Param0 );
 				}
 				break;
 			case FRemoteConsoleServer3::CMD_GET_LEVEL_NAME:

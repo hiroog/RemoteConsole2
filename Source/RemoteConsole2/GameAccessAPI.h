@@ -22,7 +22,7 @@ private:
 private:
 	void	CallbackAddWidget( UWidget* widget, ULocalPlayer* player );
 	void	CallbackRemoveWidget( UWidget* widget );
-	void	DumpWidgetInternal( FString prefix, const UWidget* widget ) const;
+	void	DumpWidgetInternal( FString prefix, const UWidget* widget, uint32_t dump_mode ) const;
 	UWidget*	FindWidgetInternal( UWidget* root_widget, const TCHAR* widget_name, bool startswith ) const;
 	UWidget*	FindWidget( UWidget* root_widget, const TCHAR* widget_name, bool startswith ) const;
 public:
@@ -32,7 +32,7 @@ public:
 	void	OutputResult( const TCHAR* name, const TCHAR* value ) const;
 	void	SendResult( const TCHAR* value ) const;
 	//-------------------------------------------------------------------------
-	void		DumpWidget() const;
+	void		DumpWidget( uint32_t dump_mode ) const;
 	UWidget*	FindWidget( const TCHAR* widget_name ) const;
 	//!  @param[in]	action	0=clicked, 1=pressed, 2=released, 3=hovered, 4=unhovered
 	void		WidgetButton( const TCHAR* widget_name, uint32_t action );

@@ -93,6 +93,11 @@ public:
 		UI_FOCUS_BTOF,
 		UI_FOCUS_BTOF2,
 	};
+	enum : uint16_t {
+		UI_DUMP_ALL,
+		UI_DUMP_BUTTON,
+		UI_DUMP_DEBUG,
+	};
 	struct CaptureStatus {
 		ControllerStatus	Status;
 		double		Time;

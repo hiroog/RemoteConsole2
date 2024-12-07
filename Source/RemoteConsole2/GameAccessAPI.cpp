@@ -72,11 +72,13 @@ void	FGameAccessAPI::CallbackRemoveWidget( UWidget* widget )
 
 //-----------------------------------------------------------------------------
 
-void	FGameAccessAPI::DumpWidgetInternal( FString prefix, const UWidget* widget ) const
+void	FGameAccessAPI::DumpWidgetInternal( FString prefix, const UWidget* widget, uint32_t dump_mode ) const
 {
 	auto*	user_widget= Cast<UUserWidget>( widget );
 	if( user_widget ){
-		OutputResult( TEXT("WidgetUser"), *widget->GetName() );
+		if( dump_mode == FRemoteConsoleServer3::UI_DUMP_DEBUG ){
+			OutputResult( TEXT("WidgetUser"), *widget->GetName() );
+		}
 		FString	fullname;
 		if( prefix.IsEmpty() ){
 			fullname= widget->GetName();
@@ -86,22 +88,30 @@ void	FGameAccessAPI::DumpWidgetInternal( FString prefix, const UWidget* widget )
 		TArray<UWidget*>	widget_array;
 		user_widget->WidgetTree->GetAllWidgets( widget_array );
 		for( const auto* child_widget : widget_array ){
-			DumpWidgetInternal( fullname, child_widget );
+			DumpWidgetInternal( fullname, child_widget, dump_mode );
 		}
 	}else{
+		if( dump_mode == FRemoteConsoleServer3::UI_DUMP_BUTTON ){
+			auto*	button= Cast<UButton>( widget );
+			if( !button ){
+				return;
+			}
+		}
 		FString	fullname= prefix + TEXT(",") + widget->GetName();
 		OutputResult( TEXT("Widget"), *FString::Printf( TEXT("%s (%s)"), *fullname, *widget->GetClass()->GetName() ) );
 	}
 }
 
 
-void	FGameAccessAPI::DumpWidget() const
+void	FGameAccessAPI::DumpWidget( uint32_t dump_mode ) const
 {
 	if( GWorld ){
 		for( const auto& widget : WidgetArray ){
-			OutputResult( TEXT("WidgetRoot"), *widget->GetName() );
+			if( dump_mode == FRemoteConsoleServer3::UI_DUMP_DEBUG ){
+				OutputResult( TEXT("WidgetRoot"), *widget->GetName() );
+			}
 			if( widget.IsValid() ){
-				DumpWidgetInternal( "", widget.Get() );
+				DumpWidgetInternal( "", widget.Get(), dump_mode );
 			}
 		}
 	}
@@ -369,8 +379,6 @@ void	FGameAccessAPI::OutputResult( const TCHAR* name, const TCHAR* value ) const
 {
 	UE_LOG(LogRemoteConsole2,Log,TEXT("RC2:Result(%d):%s=%s"), ResultKey, name, value );
 }
-
-
 
 
 //-----------------------------------------------------------------------------

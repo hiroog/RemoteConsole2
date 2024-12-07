@@ -39,41 +39,52 @@ class Controller:
     def reset( self ):
         self.reset_button()
         self.reset_stick()
+        return  self
 
     def reset_button( self ):
         self.button_bit= 0
+        return  self
 
     def reset_stick( self ):
         self.stick= [0,0,0,0,0,0]
+        return  self
 
     def on( self, button_name ):
         if button_name in self.PAD_MAP:
             self.button_bit|= self.PAD_MAP[button_name]
+        return  self
 
     def off( self, button_name ):
         if button_name in self.PAD_MAP:
             self.button_bit&= ~self.PAD_MAP[button_name]
+        return  self
 
     def stick_value( self, value ):
         return  int(float(value) * 32767) & 0xffff
 
     def lx( self, value ):
         self.stick[0]= self.stick_value( value )
+        return  self
 
     def ly( self, value ):
         self.stick[1]= self.stick_value( value )
+        return  self
 
     def rx( self, value ):
         self.stick[2]= self.stick_value( value )
+        return  self
 
     def ry( self, value ):
         self.stick[3]= self.stick_value( value )
+        return  self
 
     def tl( self, value ):
         self.stick[4]= self.stick_value( value )
+        return  self
 
     def tr( self, value ):
         self.stick[5]= self.stick_value( value )
+        return  self
 
 
 #------------------------------------------------------------------------------
@@ -124,6 +135,10 @@ class Event:
     UI_FOCUS_WINDOW   =   3
     UI_FOCUS_BTOF     =   4
     UI_FOCUS_BTOF2    =   5
+
+    UI_DUMP_ALL     =   0
+    UI_DUMP_BUTTON  =   1
+    UI_DUMP_DEBUG   =   2
 
 
 class ConnectionSocket:
@@ -323,8 +338,10 @@ class BackgroundLogger(threading.Thread):
     def command_exec( self, command, param0, param1, binary ):
         if command == Event.CMD_RETURN_LOG:
             text= binary.decode( 'utf-8', 'ignore' )
-            self.push_line( (self.log_index,text) )
-            self.log_index+= 1
+            with self.log_lock:
+                self.push_line( (self.log_index,text) )
+                self.log_index+= 1
+                self.log_event.set()
             if self.options.log_echo:
                 print( '%s' % text )
         elif command == Event.CMD_RETURN_STRING:
@@ -385,22 +402,28 @@ class BackgroundLogger(threading.Thread):
         with self.log_lock:
             return  self.log_index
 
-    def find_log( self, pattern, baseid= 0 ):
+    def set_index( self, index ):
+        with self.log_lock:
+            self.log_index= index
+
+    def find_log( self, pattern, base_index ):
         with self.log_lock:
             for index,line in self.log_queue:
-                if index>= baseid:
+                if index>= base_index:
                     pat= pattern.search( line )
                     if pat:
                         self.log_event.clear()
-                        return  pat
-        return  None
+                        return  pat,index
+        return  None,base_index
 
-    def wait_log( self, pattern, baseid= 0 ):
+    def wait_log( self, pattern ):
         while self.loop_flag:
-            pat= self.find_log( pattern, baseid )
+            pat,index= self.find_log( pattern, self.log_index )
             if pat:
+                self.log_index= index+1
                 return  pat
             if self.log_event.wait( self.options.timeout ):
+                time.sleep( 0.01 )
                 continue
             break
         return  None
@@ -490,10 +513,10 @@ class ConsoleAPI:
         self.print( 'cmd:print string "%s"' % text )
         self.sock.sendTextCommand( Event.CMD_PRINT_LOG, text )
 
-    def wait_log( self, text, baseid= 0 ):
+    def wait_log( self, text ):
         self.print( 'cmd:wait log "%s"' % text )
         log_pattern= re.compile( text )
-        pat= self.logger.wait_log( log_pattern, baseid )
+        pat= self.logger.wait_log( log_pattern )
         if pat:
             self.print( '  Found Log: %s' % pat.group(0) )
             return  pat.group(0)
@@ -519,9 +542,19 @@ class ConsoleAPI:
         key_code= self.get_keycode( key_name )
         self.sock.sendKeyboard( key_code, key_code, action )
 
+    def click_key( self, key_name, duration=0.1 ):
+        self.send_key( key_name, Event.KEY_DOWN )
+        time.sleep( duration )
+        self.send_key( key_name, Event.KEY_UP )
+
     def send_mouse_button( self, button, action ):
         self.print( 'cmd:send mouse %s (%d)' % (button, action) )
         self.sock.sendMouse( self.MOUSE_MAP[button], action, 0, 0 )
+
+    def click_mouse( self, button, duration=0.1 ):
+        self.send_mouse_button( button, Event.MOUSE_DOWN )
+        time.sleep( duration )
+        self.send_mouse_button( button, Event.MOUSE_UP )
 
     def send_mouse_move( self, cursor_x, cursor_y ):
         self.print( 'cmd:send mouse move (%d,%d)' % (cursor_x, cursor_y) )
@@ -537,9 +570,9 @@ class ConsoleAPI:
         self.print( 'cmd:ui button %s (%d)' % (widget_name, action) )
         self.sock.sendTextCommand( Event.CMD_UI_BUTTON, widget_name, action, 0 );
 
-    def send_ui_dump( self ):
-        self.print( 'cmd:ui dump' )
-        self.sock.sendCommand( Event.CMD_UI_DUMP, None, 0, 0 );
+    def send_ui_dump( self, dump_mode ):
+        self.print( 'cmd:ui dump', dump_mode )
+        self.sock.sendCommand( Event.CMD_UI_DUMP, None, dump_mode, 0 );
 
     #--------------------------------------------------------------------------
 

@@ -15,7 +15,7 @@ import RemoteConsole2API
 class SendCommandGUI:
 
     APP_NAME= 'SendCommandGUI.py'
-    VERSION= 'v2.10'
+    VERSION= 'v2.20'
     CONFIG_FILENAME= 'send_command_option.txt'
 
     def __init__( self, config_path ):
@@ -86,6 +86,10 @@ class SendCommandGUI:
             b0.pack( side=tk.LEFT, fill=tk.BOTH )
             b0.bind( '<ButtonPress>', lambda event,name=bt_name:self.cmd_button( name, True ) )
         button_win.pack( side=tk.TOP, fill=tk.BOTH )
+        tk.Button( controller_win, text='Dump UI (Button)', command=lambda: self.cmd_dump_ui( RemoteConsole2API.Event.UI_DUMP_BUTTON ) ).pack( fill=tk.BOTH )
+        tk.Button( controller_win, text='Dump UI (All)', command=lambda: self.cmd_dump_ui( RemoteConsole2API.Event.UI_DUMP_ALL ) ).pack( fill=tk.BOTH )
+        tk.Button( controller_win, text='Focus UI', command=lambda: self.cmd_focus( 'UI' ) ).pack( fill=tk.BOTH )
+        tk.Button( controller_win, text='Focus Game', command=lambda: self.cmd_focus( None ) ).pack( fill=tk.BOTH )
         controller_win.pack( side=tk.TOP, fill=tk.BOTH )
 
         sub_win= tk.LabelFrame( self.win, text='Sub Command', padx=14, pady=14 )
@@ -195,6 +199,18 @@ class SendCommandGUI:
             return
         if self.session:
             self.session.send_console_command( command )
+
+    #--------------------------------------------------------------------------
+
+    def cmd_dump_ui( self, dump_mode ):
+        self.open_session()
+        if self.session:
+            self.session.send_ui_dump( dump_mode )
+
+    def cmd_focus( self, focus_mode ):
+        self.open_session()
+        if self.session:
+            self.session.set_focus( focus_mode )
 
     #--------------------------------------------------------------------------
 

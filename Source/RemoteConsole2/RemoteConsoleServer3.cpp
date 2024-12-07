@@ -8,7 +8,7 @@
 #include "SocketSubsystem.h"
 
 
-#define	RC2_USE_LOWLEVEL_OUTPUT_3	1
+#define	RC2_USE_LOWLEVEL_OUTPUT_3	0
 
 #if RC2_USE_LOWLEVEL_OUTPUT_3
 # include "HAL/PlatformMisc.h"

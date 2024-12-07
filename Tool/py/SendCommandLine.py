@@ -119,8 +119,11 @@ class CommandTool:
     def f_ui_clicked( self, params ):
         self.console.send_ui_button( params.widget_name, RemoteConsole2API.Event.UI_BUTTON_CLICKED );
 
+    def f_ui_dump_all( self, params ):
+        self.console.send_ui_dump( RemoteConsole2API.Event.UI_DUMP_ALL )
+
     def f_ui_dump( self, params ):
-        self.console.send_ui_dump()
+        self.console.send_ui_dump( RemoteConsole2API.Event.UI_DUMP_BUTTON )
 
     def f_focus_ui( self, params ):
         self.console.set_focus( params.widget_name )
@@ -159,7 +162,7 @@ class CommandTool:
 #------------------------------------------------------------------------------
 
 def usage():
-    print( 'SendCommand v2.30 Hiroyuki Ogasawara' )
+    print( 'SendCommand v2.31 Hiroyuki Ogasawara' )
     print( 'usage: SendCommand [<options>] <cmd>...' )
     print( '  -4                   use ipv4' )
     print( '  -6                   use ipv6' )
@@ -190,6 +193,7 @@ def usage():
     print( '  --mouse_down <button>     L,M,R' )
     print( '  --mouse_up <button>       L,M,R' )
     print( '  --ui_clicked <widget-name>' )
+    print( '  --ui_dump_all' )
     print( '  --ui_dump' )
     print( '  --focus_ui <widget-name>' )
     print( '  --focus_game' )
@@ -319,6 +323,8 @@ def main( argv ):
                 func= 'f_focus_ui'
             elif arg == '--focus_game':
                 func= 'f_focus_game'
+            elif arg == '--ui_dump_all':
+                func= 'f_ui_dump_all'
             elif arg == '--ui_dump':
                 func= 'f_ui_dump'
             elif arg == '--level_name':

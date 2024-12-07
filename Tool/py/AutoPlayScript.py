@@ -9,18 +9,25 @@ options= RemoteConsole2API.Options()
 with RemoteConsole2API.ConsoleAPI( options ) as api:
     api.connect()
     api.start_logger()
-    api.sleep( 0.5 )
+    api.sleep( 1.0 )
+
     level_name= api.get_level_name()
     resolution= api.get_console_var( 'r.SetRes' )
     print( '***** %s *****' % level_name.get() )
     print( '***** %s *****' % resolution.get() )
-#    api.send_console_command( 'open ThirdPersonMap' )
+
+
+    api.send_console_command( 'open ThirdPersonMap' )
     api.sleep( 0.5 )
     api.set_focus( None, True )
-#    api.send_key( 'W', 1 )
-#    api.sleep( 4 )
-#    api.send_key( 'W', 0 )
-#    api.sleep( 1 )
+
+
+
+    api.send_key( 'W', 1 )
+    api.sleep( 4 )
+    api.send_key( 'W', 0 )
+    api.sleep( 1 )
+
     for a in range(10):
         api.send_mouse_move( 80 + a, 0 )
         api.sleep( 2.0/60.0 )
