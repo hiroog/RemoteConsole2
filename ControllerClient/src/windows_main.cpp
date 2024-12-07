@@ -126,15 +126,19 @@ int WINAPI	WinMain( HINSTANCE hinstance, HINSTANCE, LPSTR args_line, int )
 						sprintf_s( buffer.GetText(), 256, "Controller=%d %s", client.GetDeviceCount(), client.IsRecording() ? "    ● REC" : "" );
 						TextOutA( hdc, 5, 5+24, buffer.GetText(), buffer.GetDataSize() );
 						const char*	status_string= "";
+						const char*	key_event_string= "";
 						switch( client.GetStatus() ){
+						default:
+							break;
 						case NetworkClient::STATUS_WAITSERVER:
-							status_string= "Waiting for server";
+							status_string= "Waiting";
 							break;
 						case NetworkClient::STATUS_CONNECTED:
 							status_string= "Connected";
 							break;
 						}
-						TextOutA( hdc, 5, 5+48, status_string, static_cast<int>(strlen(status_string)) );
+						sprintf_s( buffer.GetText(), 256, "%s %s", status_string, key_event_string );
+						TextOutA( hdc, 5, 5+48, buffer.GetText(), buffer.GetDataSize() );
 						EndPaint( hwnd, &ps );
 						return	0;
 					}
@@ -144,7 +148,7 @@ int WINAPI	WinMain( HINSTANCE hinstance, HINSTANCE, LPSTR args_line, int )
 			});
 		window->OpenSimpleWindow(
 					"RemoteControllerClient",
-					"Remote Controller v1.40",
+					"Remote Controller v1.41",
 					WS_OVERLAPPEDWINDOW|WS_VISIBLE,
 					WS_EX_APPWINDOW,
 					320,80

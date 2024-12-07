@@ -7,7 +7,11 @@ ControllerClient/win32/remote_c.*
 ControllerClient/win32/x64
 ControllerClient/win32/key_log*.txt
 ControllerClient/key_log*.txt
+ControllerClient/config.txt
 Tool/Python
 Tool/py/send_command_option.txt
 Tool/send_command_option.txt
+Tools/Python
+Tools/py/send_command_option.txt
+Tools/send_command_option.txt
 *.user

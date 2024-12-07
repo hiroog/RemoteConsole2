@@ -1,0 +1,23 @@
+
+unzip python-3.x.x-embed-amd64.zip
+
+cd RemoteConsole2/Tools
+mkdir Bin
+cp ../../python-3.x.x-embed-amd64/* Bin/
+cp -r $PYTHON3_ROOT/Python3x/Lib/tkinter Bin/Lib/tkinter
+cp -r $PYTHON3_ROOT/Python3x/tcl Bin/tcl
+cp $PYTHON3_ROOT/Python3x/DLLs/_tkinter.pyd Bin/
+cp $PYTHON3_ROOT/Python3x/DLLs/tcl86t.dll Bin/
+cp $PYTHON3_ROOT/Python3x/DLLs/tk86t.dll Bin/
+
+vi Bin/python3x._pth
+
+-------------------------------
+python3x.zip
+Lib
+../py
+.
+-------------------------------
+
+
+
