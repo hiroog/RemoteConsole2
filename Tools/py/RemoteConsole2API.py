@@ -86,6 +86,9 @@ class Controller:
         self.stick[5]= self.stick_value( value )
         return  self
 
+    def __str__( self ):
+        return  ''.join( map( lambda val: val[0] if self.button_bit & val[1] else '_', self.PAD_MAP.items() ) )
+
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
@@ -321,7 +324,9 @@ class BackgroundLogger(threading.Thread):
 
     @classmethod
     def print( self, *msg ):
-        print( *msg, flush=True )
+        print( '\x1b[44m', end='' )
+        print( *msg, end='' )
+        print( '\x1b[0m', flush=True )
 
     #--------------------------------------------------------------------------
 
@@ -478,7 +483,9 @@ class ConsoleAPI:
 
     @classmethod
     def print( self, *msg ):
-        print( *msg, flush=True )
+        print( '\x1b[44m', end='' )
+        print( *msg, end='' )
+        print( '\x1b[0m', flush=True )
 
     def connect( self ):
         self.print( 'waiting' )
@@ -493,13 +500,16 @@ class ConsoleAPI:
         time.sleep( time_sec )
 
     def start_logger( self ):
-        self.print( 'start logger' )
-        self.logger= BackgroundLogger( self.options )
-        self.logger.start_server()
+        if not self.logger:
+            self.print( 'start logger' )
+            self.logger= BackgroundLogger( self.options )
+            self.logger.start_server()
 
     def stop_logger( self ):
-        self.print( 'stop logger' )
-        self.logger.stop_server()
+        if self.logger:
+            self.print( 'stop logger' )
+            self.logger.stop_server()
+            self.logger= None
 
     #--------------------------------------------------------------------------
 
@@ -510,7 +520,7 @@ class ConsoleAPI:
         self.print( 'cmd:console command "%s"' % command )
         self.sock.sendTextCommand( Event.CMD_CONSOLE_CMD, command )
 
-    def print_string( self, text ):
+    def send_print_string( self, text ):
         self.print( 'cmd:print string "%s"' % text )
         self.sock.sendTextCommand( Event.CMD_PRINT_LOG, text )
 
@@ -526,8 +536,17 @@ class ConsoleAPI:
     #--------------------------------------------------------------------------
 
     def send_controller( self, controller ):
-        self.print( 'cmd:send controller' )
+        self.print( 'cmd:send controller', str(controller) )
         self.sock.sendController( controller )
+
+    def click_controller( self, button_name, controller= None, duration=0.1 ):
+        if controller is None:
+            controller= Controller()
+        controller.on( button_name )
+        self.send_controller( controller )
+        time.sleep( duration )
+        controller.off( button_name )
+        self.send_controller( controller )
 
     def send_keycode( self, key_code, action ):
         self.print( 'cmd:send keycode %d (%d)' % (key_code, action) )

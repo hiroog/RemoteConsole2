@@ -10,6 +10,8 @@ namespace UnrealBuildTool.Rules
 
 		public RemoteConsole2( ReadOnlyTargetRules Target ) : base( Target )
 		{
+			bool bUseCommonUIPlugin= false;
+
 			PublicDependencyModuleNames.AddRange( new string[] {
 					"Core",
 					"CoreUObject",
@@ -24,6 +26,15 @@ namespace UnrealBuildTool.Rules
 					"InputDevice",
 					"SlateCore",
 					"Slate",
+				});
+
+			if( bUseCommonUIPlugin ){
+				PrivateDependencyModuleNames.AddRange(new string[] {
+						"CommonUI"
+					});
+			}
+			PublicDefinitions.AddRange(new string[] {
+					bUseCommonUIPlugin ?  "RC2_USE_COMMON_UI_PLUGIN=1" : "RC2_USE_COMMON_UI_PLUGIN=0"
 				});
 		}
 	}

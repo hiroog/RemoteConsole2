@@ -39,7 +39,7 @@ class CommandTool:
         self.console.send_console_command( params.text )
 
     def f_print( self, params ):
-        self.console.print_string( params.text )
+        self.console.send_print_string( params.text )
 
     def f_wait_log( self, params ):
         self.console.wait_log( params.text )

@@ -12,6 +12,10 @@
 #include "Components/Widget.h"
 #include "Blueprint/GameViewportSubsystem.h"
 
+#if RC2_USE_COMMON_UI_PLUGIN
+#  include "CommonButtonBase.h"
+#endif
+
 //#include "Delegates/DelegateCombinations.h"
 //#include "Delegates/IDelegateInterface.h"
 //#include "Engine/GameViewportClient.h"
@@ -92,8 +96,22 @@ void	FGameAccessAPI::DumpWidgetInternal( FString prefix, const UWidget* widget, 
 		}
 	}else{
 		if( dump_mode == FRemoteConsoleServer3::UI_DUMP_BUTTON ){
-			auto*	button= Cast<UButton>( widget );
-			if( !button ){
+			bool	is_button= false;
+			{
+				auto*	button= Cast<UButton>( widget );
+				if( button ){
+					is_button= true;
+				}
+			}
+#if RC2_USE_COMMON_UI_PLUGIN
+			if( !is_button ){
+				auto*	button= Cast<UCommonButtonBase>( widget );
+				if( button ){
+					is_button= true;
+				}
+			}
+#endif
+			if( !is_button ){
 				return;
 			}
 		}
@@ -222,32 +240,61 @@ void	FGameAccessAPI::WidgetButton( const TCHAR* widget_name, uint32_t action )
 	if( GWorld ){
 		auto*	widget= FindWidget( widget_name );
 		if( widget ){
-			auto*	button= Cast<UButton>( widget );
-			if( button ){
-				switch( action ){
-				default:
-				case FRemoteConsoleServer3::UI_BUTTON_CLICKED:
-					button->OnClicked.Broadcast();
-					break;
-				case FRemoteConsoleServer3::UI_BUTTON_PRESSED:
-					button->OnPressed.Broadcast();
-					break;
-				case FRemoteConsoleServer3::UI_BUTTON_RELEASED:
-					button->OnReleased.Broadcast();
-					break;
-				case FRemoteConsoleServer3::UI_BUTTON_HOVERED:
-					button->OnHovered.Broadcast();
-					break;
-				case FRemoteConsoleServer3::UI_BUTTON_UNHOVERED:
-					button->OnUnhovered.Broadcast();
-					break;
+#if RC2_USE_COMMON_UI_PLUGIN
+			{
+				auto*	button= Cast<UCommonButtonBase>( widget );
+				if( button ){
+					switch( action ){
+					default:
+					case FRemoteConsoleServer3::UI_BUTTON_CLICKED:
+						button->OnClicked().Broadcast();
+						break;
+					case FRemoteConsoleServer3::UI_BUTTON_PRESSED:
+						button->OnPressed().Broadcast();
+						break;
+					case FRemoteConsoleServer3::UI_BUTTON_RELEASED:
+						button->OnReleased().Broadcast();
+						break;
+					case FRemoteConsoleServer3::UI_BUTTON_HOVERED:
+						button->OnHovered().Broadcast();
+						break;
+					case FRemoteConsoleServer3::UI_BUTTON_UNHOVERED:
+						button->OnUnhovered().Broadcast();
+						break;
+					}
+					OutputResult( TEXT("ButtonResult"), TEXT("1") );
+					return;
 				}
-				OutputResult( TEXT("ButtonResult"), TEXT("1") );
-				return;
 			}
-			UE_LOG(LogRemoteConsole2,Error,TEXT("RemoteConsole2:WidgetButton: %s Is Not Button"), widget_name );
+#endif
+			{
+				auto*	button= Cast<UButton>( widget );
+				if( button ){
+					switch( action ){
+					default:
+					case FRemoteConsoleServer3::UI_BUTTON_CLICKED:
+						button->OnClicked.Broadcast();
+						break;
+					case FRemoteConsoleServer3::UI_BUTTON_PRESSED:
+						button->OnPressed.Broadcast();
+						break;
+					case FRemoteConsoleServer3::UI_BUTTON_RELEASED:
+						button->OnReleased.Broadcast();
+						break;
+					case FRemoteConsoleServer3::UI_BUTTON_HOVERED:
+						button->OnHovered.Broadcast();
+						break;
+					case FRemoteConsoleServer3::UI_BUTTON_UNHOVERED:
+						button->OnUnhovered.Broadcast();
+						break;
+					}
+					OutputResult( TEXT("ButtonResult"), TEXT("1") );
+					return;
+				}
+			}
+			UE_LOG(LogRemoteConsole2,Error,TEXT("RemoteConsole2:WidgetButton: %s is not a UButton widget"), widget_name );
 		}else{
-			UE_LOG(LogRemoteConsole2,Warning,TEXT("RemoteConsole2:WidgetButton: %s Not Found"), widget_name );
+			UE_LOG(LogRemoteConsole2,Warning,TEXT("RemoteConsole2:WidgetButton: %s not found"), widget_name );
 		}
 	}
 	OutputResult( TEXT("ButtonResult"), TEXT("0") );
