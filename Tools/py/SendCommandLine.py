@@ -162,7 +162,7 @@ class CommandTool:
 #------------------------------------------------------------------------------
 
 def usage():
-    print( 'SendCommand v2.31 Hiroyuki Ogasawara' )
+    print( 'SendCommand v2.32 Hiroyuki Ogasawara' )
     print( 'usage: SendCommand [<options>] <cmd>...' )
     print( '  -4                   use ipv4' )
     print( '  -6                   use ipv6' )
@@ -204,6 +204,7 @@ def usage():
     print( '  --replay <replay_file>' )
     print( '  --log_echo' )
     print( '  --net_echo' )
+    print( '  --color' )
     print( 'ex. SendCommand -h 192.168.0.10 --cmd stat fps' )
     print( 'ex. SendCommand -6 --cmd stat unit' )
     print( 'ex. SendCommand --on A,B,U,L --sleep 1 --pad_reset' )
@@ -228,7 +229,7 @@ class Params( RemoteConsole2API.OptionBase ):
 
 
 def main( argv ):
-    options= RemoteConsole2API.Options()
+    options= RemoteConsole2API.Options( color=False, log_echo=False )
     acount= len(argv)
     ai= 1
     last_params= None
@@ -305,6 +306,8 @@ def main( argv ):
                 options.log_echo= True
             elif arg == '--net_echo':
                 options.net_echo= True
+            elif arg == '--color':
+                options.color= True
             elif arg == '--wait_log':
                 ai= params.set_str( ai, argv, 'text' )
                 func= 'f_wait_log'

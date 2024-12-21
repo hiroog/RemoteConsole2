@@ -3,18 +3,16 @@
 
 import os
 import sys
-import RemoteConsole2API
+from RemoteConsole2API import ConsoleAPI,Options,Event,Controller
 
 
-options= RemoteConsole2API.Options()
-
-with RemoteConsole2API.ConsoleAPI( options ) as api:
+with ConsoleAPI( Options() ) as api:
     api.connect()
     api.start_logger()
-    api.sleep( 1.0 )
 
     api.send_console_command( 'open ThirdPersonMap' )
     api.wait_log( r'LevelBP\s+BeginPlay' )
+
 
     level_name= api.get_level_name()
     resolution= api.get_console_var( 'r.SetRes' )
@@ -22,12 +20,11 @@ with RemoteConsole2API.ConsoleAPI( options ) as api:
     print( '***** %s *****' % resolution.get() )
 
 
-
     api.sleep( 0.5 )
     api.set_focus( None, True )
     api.sleep( 0.5 )
 
-    controller= RemoteConsole2API.Controller()
+    controller= Controller()
     api.send_controller( controller.reset().lx( 1.0 ) )
     api.sleep( 1 )
     api.send_controller( controller.reset() )
@@ -43,17 +40,17 @@ with RemoteConsole2API.ConsoleAPI( options ) as api:
         api.send_mouse_move( 80 + a, 0 )
         api.sleep( 2.0/60.0 )
 
-    api.send_ui_button( 'Button_01', RemoteConsole2API.Event.UI_BUTTON_CLICKED )
+    api.send_ui_button( 'Button_01', Event.UI_BUTTON_CLICKED )
     api.wait_log( r'Button 01 Clicked' )
 
     api.sleep( 1 )
 
-    api.send_ui_button( 'Button_01', RemoteConsole2API.Event.UI_BUTTON_CLICKED )
+    api.send_ui_button( 'Button_01', Event.UI_BUTTON_CLICKED )
     api.wait_log( r'Button 01 Clicked' )
 
     api.sleep( 1 )
 
-    api.send_ui_button( 'Button_02', RemoteConsole2API.Event.UI_BUTTON_CLICKED )
+    api.send_ui_button( 'Button_02', Event.UI_BUTTON_CLICKED )
     api.wait_log( r'Button 02 Clicked' )
 
     api.sleep( 1 )

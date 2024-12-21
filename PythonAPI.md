@@ -18,8 +18,7 @@ api.send_console_command( 'stat fps' )
 api.close()
 ```
 
-with 構文を使用することができます。
-スクリプト終了時に自動的に切断できるためこちらの方法をお勧めします。
+with 構文を使用すると明示的に close() を呼び出す必要がなくなります。
 
 ```python
 from RemoteConsole2API import ConsoleAPI,Controller,Event
@@ -33,21 +32,70 @@ with ConsoleAPI( Options() ) as api:
 
 
 ```python
-options= Options()
-options.host= 'localhost'
-options.port= 10101
-
+options= Options( host='localhost', port=10101 )
 with ConsoleAPI( options ) as api:
     api.connect()
     ～
 ```
 
 
+host を指定することで他の PC 上で起動したゲームに接続することができます。
+また port を変更することで、同一 PC 上の複数のゲームに接続することができます。
+
+Options() に指定可能なパラメータは以下のとおりです。
+
+| オプション   | デフォルト | 内容                                       |
+|:-------------|:-----------|:-------------------------------------------|
+| host         | localhost  | 接続するホスト名または IP アドレス         |
+| port         | 10101      | 接続するポート番号                         |
+| ipv          | 4          | IPV4 の場合は 4、IPv6 の場合は 6 を設定    |
+| echo\_log    | True       | logger 起動時にログを表示するかどうか      |
+| log\_limit   | 6000       | logger が保持するログの最大行数            |
+| color        | True       | ログ表示とコマンドの色分け表示を行う       |
+| net\_echo    | False      | デバッグ用、送受信したコマンドを表示する   |
+
+
 ConsoleAPI() オブジェクトはゲームとの接続セッションを所有しています。
 もし同時に複数のゲームと接続を行いたい場合は、複数の ConsoleAPI() を作成してください。
 
+複数のゲームを起動して同時に接続を行う例
+
+```python
+api1= ConsoleAPI( Options( port=10101 ) )
+api1.connect()
+
+api2= ConsoleAPI( Options( port=10102 ) )
+api2.connect()
+
+api3= ConsoleAPI( Options( port=10103 ) )
+api3.connect()
+
+～
+```
 
 
+複数のゲームを起動して同時にコンソールコマンドを実行する例。
+
+```python
+api_list= []
+# それぞれ接続待ちを行う
+for port in [ 10101, 10102, 10103 ]:
+    api= ConsoleAPI( Options( port=port ) )
+    api.connect()
+    api_list.append( api )
+
+# 同時にコンソールコマンドを送信する
+for api in api_list:
+    api.send_console_command( 'stat fps' )
+
+# 切断する
+for api in api_list:
+    api.close()
+```
+
+
+
+# API 詳細
 
 ## 接続
 
@@ -83,7 +131,6 @@ with ConsoleAPI( options ) as api:
     api.connect()
     api.start_logger()
 ```
-
 
 
 ## Console Command の送信
@@ -127,7 +174,7 @@ api.send_controller( Controller().reset() )
 
 ```python
 # A と X ボタンを同時に押した状態を送信
-api.send_controller( Controller().reset().on( 'A' ).on( 'X' ) )
+api.send_controller( Controller().on( 'A' ).on( 'X' ) )
 ```
 
 ```python
@@ -151,27 +198,29 @@ controller.on( BUTTON_NAME )
 controller.off( BUTTON_NAME )
 ```
 
+コントローラーのデジタルボタンを操作します。
 
-| BUTTON\_NAME     | 説明   |
-|:-----------------|:-------|
-| 'U'              | ↑ ボタン       |
-| 'D'              | ↓ ボタン       |
-| 'L'              | ← ボタン       |
-| 'R'              | → ボタン       |
-| 'A'              | A ボタン/×     |
-| 'B'              | B ボタン/◯     |
-| 'X'              | X ボタン/□     |
-| 'Y'              | Y ボタン/△     |
-| 'L1'             | L1 ボタン/ショルダーL      |
-| 'R1'             | R1 ボタン/ショルダーR      |
-| 'L2'             | L2 ボタン/トリガーL        |
-| 'R2'             | R2 ボタン/トリガーR        |
-| 'L3'             | L3 ボタン/サムボタンL      |
-| 'R3'             | R3 ボタン/サムボタンR      |
-| 'M0'             | SELECT/BACK/SHARE      |
-| 'M1'             | START/OPTIONS          |
-| 'M2'             | PS/X/HOME              |
-| 'M3'             | TouchPad Click         |
+
+| BUTTON\_NAME  | Xbox         | PS4/PS5         | Switch        |
+|:--------------|:-------------|:----------------|:--------------|
+| 'U'           | ↑           | ↑              | ↑            |
+| 'D'           | ↓           | ↓              | ↓            |
+| 'L'           | ←           | ←              | ←            |
+| 'R'           | →           | →              | →            |
+| 'A'           | A            | ×              | B             |
+| 'B'           | B            | ◯              | A             |
+| 'X'           | X            | □              | Y             |
+| 'Y'           | Y            | △              | X             |
+| 'L1'          | ショルダーL  | L1              | L             |
+| 'R1'          | ショルダーR  | R1              | R             |
+| 'L2'          | トリガーL    | L2              | ZL            |
+| 'R2'          | トリガーR    | R2              | ZR            |
+| 'L3'          | サムボタンL  | L3              | L StickButton |
+| 'R3'          | サムボタンR  | R3              | R StickButton |
+| 'M0'          | BACK/View    | SHARE/CREATE    | -             |
+| 'M1'          | START/Menu   | OPTIONS         | +             |
+| 'M2'          |              | PS              | HOME          |
+| 'M3'          |              | TouchPad Click  | Capture       |
 
 
 ### スティックの状態変更
@@ -185,6 +234,7 @@ controller.ry( STICKVALUE )
 ```
 
 STICKVALUE には -1.0～1.0 の値を指定します。
+この範囲を超えた場合は -1.0～1.0 の範囲にクランプされます。
 
 
 
@@ -197,6 +247,7 @@ controller.tl( TRIGGERVALUE )
 ```
 
 TRIGGERVALUE には 0.0～1.0 の値を指定します。
+この範囲を超えた場合は 0.0～1.0 の範囲にクランプされます。
 
 
 
@@ -207,6 +258,7 @@ controller.reset()
 ```
 
 ボタンやトリガーをすべて離した状態にし、スティックをニュートラルに戻します。
+Controller() オブジェクト作成直後は reset() 状態と同じです。
 
 
 
@@ -217,11 +269,8 @@ controller.reset()
 api.click_controller( BUTTON_NAME, controller=None, duration=0.1 )
 ```
 
-
-
-
-
-
+controller オブジェクトが None の場合は内部で新規作成します。
+duration で押している時間(秒)を指定できます。
 
 
 
@@ -236,21 +285,40 @@ api.send_key( KEY_NAME, ACTION )
 KEY\_NAME には 'A'～'Z', 'SPACE', 'RETURN', 'SHIFT' 等のキー名を指定します。
 ACTION には Event.KEY\_UP, Event.KEY\_DOWN, Event.KEY\_CHAR を指定できます。
 
+表にないキーを送信したい場合は追加するので連絡ください。
 
-| KEY\_NAME        | 説明   |
-|:-----------------|:-------|
-| 'A'～'Z',その他記号等   | 文字キー    |
-| 'BACK'           | BACKSPACE キー     |
-| 'TAB'            | TAB キー           |
-| 'SHIFT'          | SHIFT キー         |
-| 'CONTROL'        | CONTROL キー       |
-| 'RETURN'         | RETURN キー        |
-| 'ESCAPE'         | ESCAPE キー        |
-| 'SPACE'          | SPACE キー         |
-| 'LEFT'           | ← キー            |
-| 'UP'             | ↑ キー            |
-| 'RIGHT'          | → キー            |
-| 'DOWN'           | ↓ キー            |
+
+| KEY\_NAME        | 説明             |
+|:-----------------|:-----------------|
+| 'A'～'Z',その他記号等   | 文字キー  |
+| 'BACK'           | BACKSPACE キー   |
+| 'TAB'            | TAB キー         |
+| 'RETURN'         | RETURN キー      |
+| 'SHIFT'          | SHIFT キー       |
+| 'CONTROL'        | CONTROL キー     |
+| 'MENU'           | ALT キー         |
+| 'ESCAPE'         | ESCAPE キー      |
+| 'SPACE'          | SPACE キー       |
+| 'PRIOR'          | PageUp キー      |
+| 'NEXT'           | PageDown キー    |
+| 'END'            | END キー         |
+| 'HOME'           | HOME キー        |
+| 'LEFT'           | ← キー          |
+| 'UP'             | ↑ キー          |
+| 'RIGHT'          | → キー          |
+| 'DOWN'           | ↓ キー          |
+| 'F1'             | F1 キー          |
+| 'F2'             | F2 キー          |
+| 'F3'             | F3 キー          |
+| 'F4'             | F4 キー          |
+| 'F5'             | F5 キー          |
+| 'F6'             | F6 キー          |
+| 'F7'             | F7 キー          |
+| 'F8'             | F8 キー          |
+| 'F9'             | F9 キー          |
+| 'F10'            | F10 キー         |
+| 'F11'            | F11 キー         |
+| 'F12'            | F12 キー         |
 
 
 
@@ -267,8 +335,7 @@ ACTION には Event.KEY\_UP, Event.KEY\_DOWN, Event.KEY\_CHAR を指定できま
 api.click_key( KEY_NAME, duration=0.1 )
 ```
 
-
-
+duration は押している時間(秒)を指定します。
 
 
 
@@ -281,21 +348,21 @@ api.send_mouse_button( BUTTON_NAME, ACTION )
 ```
 
 
-| BUTTON\_NAME     | 説明   |
-|:-----------------|:-------|
-| 'L'              | 左ボタン     |
-| 'M'              | 中ボタン     |
-| 'R'              | 右ボタン     |
-| 'T1'             | サイドボタン1    |
-| 'T2'             | サイドボタン2    |
+| BUTTON\_NAME     | 説明            |
+|:-----------------|:----------------|
+| 'L'              | 左ボタン        |
+| 'M'              | 中ボタン        |
+| 'R'              | 右ボタン        |
+| 'T1'             | サイドボタン1   |
+| 'T2'             | サイドボタン2   |
 
 
 
-| ACTION               | 説明   |
-|:---------------------|:-------|
-| Event.MOUSE\_DOWN    | ボタンを押します        |
-| Event.MOUSE\_UP      | ボタンを離します        |
-| Event.MOUSE\_DCLICK  | ダブルクリックします    |
+| ACTION               | 説明                  |
+|:---------------------|:----------------------|
+| Event.MOUSE\_DOWN    | ボタンを押します      |
+| Event.MOUSE\_UP      | ボタンを離します      |
+| Event.MOUSE\_DCLICK  | ダブルクリックします  |
 
 
 
@@ -320,10 +387,6 @@ api.send_mouse_setpos( cursor_x, cursor_y )
 
 
 
-
-
-
-
 ## UMG 操作
 
 ### UMG のボタンに関するイベントを送信します
@@ -337,13 +400,13 @@ BUTTON\_NAME は UMG Widget の内部名称です。
 
 
 
-| ACTION               | 説明   |
-|:---------------------|:-------|
-| Event.UI\_BUTTON\_CLICKED    | UMG のボタンを押して離します  |
-| Event.UI\_BUTTON\_PRESSED    | UMG のボタンを離します        |
-| Event.UI\_BUTTON\_RELEASED   | UMG のボタンを離します        |
-| Event.UI\_BUTTON\_HOVERED    | UMG の上にカーソルを乗せた状態にします     |
-| Event.UI\_BUTTON\_UNHOVERED  | UMG の上からカーソルが離れた状態にします   |
+| ACTION                       | 説明                                      |
+|:-----------------------------|:------------------------------------------|
+| Event.UI\_BUTTON\_CLICKED    | UMG のボタンを押して離します              |
+| Event.UI\_BUTTON\_PRESSED    | UMG のボタンを離します                    |
+| Event.UI\_BUTTON\_RELEASED   | UMG のボタンを離します                    |
+| Event.UI\_BUTTON\_HOVERED    | UMG の上にカーソルを乗せた状態にします    |
+| Event.UI\_BUTTON\_UNHOVERED  | UMG の上からカーソルが離れた状態にします  |
 
 
 
@@ -353,8 +416,8 @@ BUTTON\_NAME は UMG Widget の内部名称です。
 api.send_ui_dump( EVENT )
 ```
 
-| EVENT               | 説明   |
-|:---------------------|:-------|
+| EVENT                   | 説明                                        |
+|:------------------------|:--------------------------------------------|
 | Event.UI\_DUMP\_ALL     | UMG の Widget 一覧を UE のログに表示します  |
 | Event.UI\_DUMP\_BUTTON  | UMG の Button 一覧を UE のログに表示します  |
 
@@ -380,7 +443,7 @@ api.set_focus( WIDGET_NAME, force=False )
 result= api.get_console_var( VARIABLE_NAME )
 ```
 
-このコマンドを利用する場合は事前に ```api.start_logger()``` の呼び出しが必要です。
+このコマンドは logger を使用します。起動時に ```api.start_logger()``` を呼び出しておく必要があります。
 
 受け取った値は Feature() オブジェクトに格納されるため、値を読み出す場合は get() を使用してください。
 
@@ -396,7 +459,7 @@ get() の呼び出しを必要なタイミングまで遅らせることで同�
 ```python
 resolution= api.get_console_var( 'r.SetRes' )
 
-～
+～ # 同期待ちせずに、この間に別の処理が可能
 
 print( resolution.get() )
 ```
@@ -405,17 +468,19 @@ print( resolution.get() )
 
 コンソール変数の書き込みには ```api.send_console_command()``` を使用してください。
 
+```python
+if int(api.get_console_var( 'r.HDR.EnableHDROutput' ).get()) == 0:
+    api.send_console_command( 'r.HDR.EnableHDROutput 1' )
+```
 
 
 
-## ログの受取
+## ログの監視
 
-```api.start_logger()``` を実行すると、ゲーム中に出力されたログのモニタリングを行うようになります。
+ログの情報アクセスするには logger の起動が必要です。最初の接続時に ```api.start_logger()``` を実行しておいてください。
+ゲーム中に出力されたログのモニタリングを行います。
 
-
-これを利用してログ出力の解析や表示待ちなどの同期を行うことが可能です。
-
-ログの保持可能な最大行数は Options().log_limit で指定します。
+保持可能なログの最大行数は Options() の log_limit で変更できます。
 デフォルトは 6000 行です。
 
 
@@ -428,32 +493,27 @@ api.wait_log( PATTERN )
 ```
 
 受け取ったログが引数で与えた PATTERN にマッチするまで待機します。
-PATTERN には Python の正規表現を渡します。
+PATTERN には Python の正規表現を指定します。
+
+この命令を使うことで対話的なスクリプトの実行を行うことができます。
 
 wait_log() はマッチしたログの該当行を返します。
 そのためパターンマッチを利用したログの解析やデータの読み取りを行うこともできます。
 
+ログのモニタリングはバックグラウンドで常時行われているため、```api.wait_log()``` の呼び出しよりも前に受け取ったログにもマッチさせることが可能です。
+そのため、スクリプトの命令実行タイミングのわずかなずれによって動作が不安定になるのを防いでいます。
 
-ログのモニタリングは ```api.start_logger()``` 実行後バックグラウンドで常時行われているため、```api.wait_log()``` の呼び出しよりも前に受け取ったログにもマッチさせることが可能です。
-
-この仕様によって、スクリプトの命令実行タイミングのわずかなずれによって、ゲームとの同期が安定しなくなるのを防いでいます。
-
-以下の例では wait_log() は、直前の send_print_string() の表示を必ず受け取ることができます。
-
+例えば以下 wait_log() は、直前の send_print_string() の表示を見て次に進むことができます。
 
 ```python
 api.send_print_string( 'LogString' )
 
-api.wait_log( 'LogString' ) # 停止しないで直前の print_string() の結果を見て次に進む
+api.wait_log( 'LogString' ) # 停止しないで直前の print_string() の結果にマッチして次に進むことができる
 ```
 
-もし wait_log() 実行後のログだけを監視するようにしてしまうと、通信速度や実行タイミングの影響を強く受けます。
-例えば print_log() の実行が遅れた場合は wait_log() が文字列を受け取り次に進み、print_log() の表示の方が早かった場合は wait_log() でスクリプトの実行が停止してしまいます。
-遡ってログを監視することでこのような不確実性を避けることができます。
+もし wait_log() 実行後のログだけを監視するようにしてしまうと、通信速度や実行タイミングによってマッチしたりマッチできなくなったりします。
 
-
-また以下の例のように、同じ文字列に対する表示待ちを連続して行っても意図したとおりに動作します。
-
+また以下の例のように、同じ文字列に対する表示待ちを連続して行ってもきちんと動作します。
 
 ```python
 api.send_print_string( 'LogString' ) # (A)
@@ -465,19 +525,20 @@ api.send_print_string( 'LogString' ) # (B)
 api.wait_log( 'LogString' ) # (A) ではなく (B) によって次に進む
 ```
 
-wait_log() のログ解析には次のような仕組みが用いられています。
+wait_log() のログのマッチングは次のような仕組みで動いています。
 
 * 受け取ったログにはすべて行単位で異なる ID 番号が割り振られる
 * wait_log() は前回マッチした ID + 1 の行から検索を行う
 
-次の手順で wait_log() が検索を開始する ID を意図的に書き換えることが可能です。
-これによりログの待機開始位置を任意に変更することができます。
+
+なお意図的に検索を開始する ID を書き換えることが可能です。
+これによりログの待機開始位置を自由に変更することができます。
 
 
 #### 現在の検索開始場所を取得
 
 ```python
-api.logger.get_index()
+index= api.logger.get_index()
 ```
 
 #### 検索開始場所を設定
@@ -486,7 +547,9 @@ api.logger.get_index()
 api.logger.set_index( index )
 ```
 
-例えば wait_log() の前に set_index( 0 ) を行うと、現在バッファリングしているすべてのログを解析対象とみなすことができます。
+例えば wait_log() の前に set_index( 0 ) を行うと、現在バッファリングしているすべてのログをマッチング対象とみなすことができます。
+
+また wait_log() の代わりに find_log() を使って任意のログの文字列を参照することも可能です。
 
 
 #### 同期待ちをしないで解析のみ行う場合
@@ -495,12 +558,12 @@ api.logger.set_index( index )
 result,index= api.logger.find_log( PATTERN )
 ```
 
-result には PATTERN の検索結果が入ります。
+PATTERN は Python の正規表現です。
+result には PATTERN の結果が入ります。
 マッチしなかった場合は None です。
 index はマッチした行の ID 番号です。
 
 この命令も wait_log() 同様 set_index() の影響を受けます。
-
 
 バッファリングしているログ全体から特定の文字列を探して値を読み取りたい場合の例
 
@@ -518,10 +581,58 @@ api.logger.set_index( save_index ) # Index 値を戻す
 ```
 
 
+## リプレイ機能
+
+RemoteControllerClient を使用して、コントローラーやキー操作の送信データを記録することができます。
+以下の API を使用して記録したデータを再生できます。
+
+
+### リプレイ
+
+```python
+api.replay( FILE_NAME )
+```
+
+記録したデータのファイル名を与えてください。
+すぐに再生が始まります。
+
+3D シーンの移動情報はフレームレートの影響を強く受けます。
+そのためアナログ操作は厳密に同じ挙動とならないので注意してください。
+特にカメラの回転は、ごく僅かなずれでも移動先が大きく変化します。
+
+
+
+## その他の API
+
+### 時間待ちを行います
+
+```python
+api.sleep( DURATION )
+```
+
+指定時間スクリプトの実行を停止します。
+秒単位で指定します。
+
+### 現在のレベル名を取得します
+
+```python
+api.get_level_name()
+```
+
+この命令は get_console_var() 同様 Feature() を返すので、値の読み出しには get() が必要です。
+logger が必要です。
+
+
+## マルチセッション
+
+RemoteConsole2 Plugin はマルチセッションに対応しており複数の Client が同時に接続してコマンドの送信を行うことが可能です。ただし logger を起動できるのはそのうちの 1つだけに制限されます。
+
+
+例えば 1つのセッションでリプレイを再生しながら、他のセッションでログ待ちなどの対話的なスクリプトを同時に走らせるような使い方もできます。
+
 
 ## 更新
 
 2024/12/21 小笠原博之
-
 
 

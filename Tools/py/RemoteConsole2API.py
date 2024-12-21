@@ -295,6 +295,8 @@ class Feature:
 
 class BackgroundLogger(threading.Thread):
 
+    is_color= False
+
     def __init__( self, options ):
         super().__init__()
         self.options= options
@@ -324,9 +326,12 @@ class BackgroundLogger(threading.Thread):
 
     @classmethod
     def print( self, *msg ):
-        print( '\x1b[44m', end='' )
-        print( *msg, end='' )
-        print( '\x1b[0m', flush=True )
+        if self.is_color:
+            print( '\x1b[44m', end='' )
+            print( *msg, end='' )
+            print( '\x1b[0m', flush=True )
+        else:
+            print( *msg, flush=True )
 
     #--------------------------------------------------------------------------
 
@@ -441,17 +446,35 @@ class BackgroundLogger(threading.Thread):
 class ConsoleAPI:
 
     VKEY_MAP= {
-            'BACK'   : 0x08,
-            'TAB'    : 0x09,
-            'RETURN' : 0x0d,
+            'BACK'   : 0x08,    # BackSpace
+            'TAB'    : 0x09,    # TAB
+            'RETURN' : 0x0d,    # Enter
             'SHIFT'  : 0x10,
             'CONTROL': 0x11,
+            'MENU'   : 0x12,    # ALT
             'ESCAPE' : 0x1b,
             'SPACE'  : 0x20,
+            'PRIOR'  : 0x21,    # PageUp
+            'NEXT'   : 0x22,    # PageDown
+            'END'    : 0x23,
+            'HOME'   : 0x24,
             'LEFT'   : 0x25,
             'UP'     : 0x26,
             'RIGHT'  : 0x27,
             'DOWN'   : 0x28,
+            'DELETE' : 0x2e,
+            'F1'     : 0x70,
+            'F2'     : 0x71,
+            'F3'     : 0x72,
+            'F4'     : 0x73,
+            'F5'     : 0x74,
+            'F6'     : 0x75,
+            'F7'     : 0x76,
+            'F8'     : 0x77,
+            'F9'     : 0x78,
+            'F10'    : 0x79,
+            'F11'    : 0x7a,
+            'F12'    : 0x7b,
         }
     MOUSE_MAP= {
             'L' :   0,
@@ -461,11 +484,18 @@ class ConsoleAPI:
             'T2':   4,
         }
 
+    is_color= False
+
     def __init__( self, options ):
         self.options= options
         self.sock= None
         self.controller= Controller()
         self.logger= None
+        if self.options.color:
+            import os
+            os.system( 'color' )
+            ConsoleAPI.is_color= True
+            BackgroundLogger.is_color= True
 
     def __enter__( self ):
         return  self
@@ -483,9 +513,12 @@ class ConsoleAPI:
 
     @classmethod
     def print( self, *msg ):
-        print( '\x1b[44m', end='' )
-        print( *msg, end='' )
-        print( '\x1b[0m', flush=True )
+        if self.is_color:
+            print( '\x1b[44m', end='' )
+            print( *msg, end='' )
+            print( '\x1b[0m', flush=True )
+        else:
+            print( *msg, flush=True )
 
     def connect( self ):
         self.print( 'waiting' )
@@ -741,7 +774,7 @@ class OptionBase:
 
 
 class Options( OptionBase ):
-    def __init__( self ):
+    def __init__( self, **args ):
         super().__init__()
         self.host= '127.0.0.1'  # '::1'
         self.port= 10101        # 10102
@@ -749,8 +782,12 @@ class Options( OptionBase ):
         self.func_list= []
         self.timeout= 20 * 60
         self.net_echo= False
-        self.log_echo= False
+        self.log_echo= True
         self.log_limit= 6000
+        self.color= True
+        for key in args:
+            getattr( self,key )
+            setattr( self, key, args[key] )
 
 
 #------------------------------------------------------------------------------
