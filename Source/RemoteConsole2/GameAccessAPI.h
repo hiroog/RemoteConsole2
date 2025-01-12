@@ -32,6 +32,8 @@ public:
 	void	OutputResult( const TCHAR* name, const TCHAR* value ) const;
 	void	SendResult( const TCHAR* value ) const;
 	//-------------------------------------------------------------------------
+	void		ExecConsoleCommand( const TCHAR* command ) const;
+	//-------------------------------------------------------------------------
 	void		DumpWidget( uint32_t dump_mode ) const;
 	UWidget*	FindWidget( const TCHAR* widget_name ) const;
 	//!  @param[in]	action	0=clicked, 1=pressed, 2=released, 3=hovered, 4=unhovered

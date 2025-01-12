@@ -20,8 +20,10 @@
 //#include "Delegates/IDelegateInterface.h"
 //#include "Engine/GameViewportClient.h"
 
-#define	RC2_USE_STARTSWITH	1
+#define	RC2_USE_STARTSWITH			1
+#define	RC2_USE_COMMAND_EXECUTOR	1
 
+//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
 void	FGameAccessAPI::Init()
@@ -54,6 +56,27 @@ void	FGameAccessAPI::Quit()
 
 //-----------------------------------------------------------------------------
 
+void	FGameAccessAPI::ExecConsoleCommand( const TCHAR* command ) const
+{
+#if RC2_USE_COMMAND_EXECUTOR
+	TArray<IConsoleCommandExecutor*>	command_executors= IModularFeatures::Get().GetModularFeatureImplementations<IConsoleCommandExecutor>( IConsoleCommandExecutor::ModularFeatureName() );
+	if( command_executors.IsValidIndex(0) ){
+		IConsoleCommandExecutor*	executor= command_executors[0];
+		if( executor ){
+			executor->Exec( command );
+		}
+	}
+#else
+	if( GEngine ){
+		GEngine->Exec( GWorld, command );
+	}
+#endif
+}
+
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
 void	FGameAccessAPI::CallbackAddWidget( UWidget* widget, ULocalPlayer* player )
 {
 	WidgetArray.Add( MakeWeakObjectPtr( widget ) );
@@ -74,6 +97,7 @@ void	FGameAccessAPI::CallbackRemoveWidget( UWidget* widget )
 }
 
 
+//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
 void	FGameAccessAPI::DumpWidgetInternal( FString prefix, const UWidget* widget, uint32_t dump_mode ) const
@@ -352,6 +376,7 @@ void	FGameAccessAPI::SetFocus( const TCHAR* widget_name, uint32_t mode )
 
 
 //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 void	FGameAccessAPI::SetWindowFocus( uint32_t mode )
 {
@@ -382,6 +407,7 @@ void	FGameAccessAPI::SetWindowFocus( uint32_t mode )
 
 
 //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 void	FGameAccessAPI::GetCurrentLevelName()
 {
@@ -394,6 +420,7 @@ void	FGameAccessAPI::GetCurrentLevelName()
 
 
 //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 void	FGameAccessAPI::GetConsoleVar( const TCHAR* var_name )
 {
@@ -405,6 +432,7 @@ void	FGameAccessAPI::GetConsoleVar( const TCHAR* var_name )
 }
 
 
+//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
 void	FGameAccessAPI::SetResultKey( uint32_t result_key, FRemoteConsoleServer3* server )

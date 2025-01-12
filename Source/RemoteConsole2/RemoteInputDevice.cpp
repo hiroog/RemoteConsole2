@@ -408,7 +408,9 @@ void	FRemoteInputDevice::ExecGameAPI()
 			}
 			switch( command.Command ){
 			case FRemoteConsoleServer3::CMD_CONSOLE_CMD:
-				GEngine->Exec( GWorld, *command.StringParam );
+				if( iGameAPI ){
+					iGameAPI->ExecConsoleCommand( *command.StringParam );
+				}
 				break;
 			case FRemoteConsoleServer3::CMD_PRINT_LOG:
 				UE_LOG( LogRemoteConsole2, Log,TEXT("%s"), *command.StringParam );
