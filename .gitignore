@@ -15,3 +15,4 @@ Tools/Python
 Tools/py/send_command_option.txt
 Tools/send_command_option.txt
 *.user
+output.txt

@@ -6,7 +6,7 @@ import sys
 from RemoteConsole2API import ConsoleAPI,Options,Event,Controller
 
 
-with ConsoleAPI( Options() ) as api:
+with ConsoleAPI( Options( log_file_name='output.txt' ) ) as api:
     api.connect()
     api.start_logger()
 

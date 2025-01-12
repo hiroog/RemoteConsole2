@@ -267,6 +267,56 @@ class ConnectionSocket:
             self.sock.close()
             self.sock= None
 
+#------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+
+class LogFile:
+    def __init__( self, options ):
+        self.options= options
+        self.is_color= False
+        self.log_file= None
+        self.log_lock= threading.Lock()
+        if self.options.color:
+            import os
+            os.system( 'color' )
+            self.is_color= True
+        self.open( self.options.log_file_name )
+
+    def write_file( self, *msg ):
+        if self.log_file:
+            for text in msg:
+                self.log_file.write( text )
+            self.log_file.write( '\n' )
+            self.log_file.flush()
+
+    def print( self, *msg ):
+        with self.log_lock:
+            print( *msg, flush=True )
+            self.write_file( *msg )
+
+    def print_script( self, *msg ):
+        with self.log_lock:
+            if self.is_color:
+                print( '\x1b[44m', end='' )
+                print( *msg, end='' )
+                print( '\x1b[0m', flush=True )
+            else:
+                print( '----------------', *msg, flush=True )
+            self.write_file( '---------------- ', *msg )
+
+    def open( self, file_name ):
+        if file_name:
+            self.close_file()
+            self.log_file= open( file_name, 'w', encoding='utf-8' )
+
+    def close_file( self ):
+        if self.log_file:
+            self.log_file.close()
+            self.log_file= None
+
+    def close( self ):
+        self.close_file()
+
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
@@ -295,11 +345,10 @@ class Feature:
 
 class BackgroundLogger(threading.Thread):
 
-    is_color= False
-
-    def __init__( self, options ):
+    def __init__( self, options, logfile ):
         super().__init__()
         self.options= options
+        self.logfile= logfile
         self.sock= None
         self.log_queue= collections.deque()
         self.log_lock= threading.Lock()
@@ -324,14 +373,8 @@ class BackgroundLogger(threading.Thread):
             self.sock.close()
             self.join()
 
-    @classmethod
     def print( self, *msg ):
-        if self.is_color:
-            print( '\x1b[44m', end='' )
-            print( *msg, end='' )
-            print( '\x1b[0m', flush=True )
-        else:
-            print( *msg, flush=True )
+        self.logfile.print_script( *msg )
 
     #--------------------------------------------------------------------------
 
@@ -354,7 +397,7 @@ class BackgroundLogger(threading.Thread):
                 self.log_index+= 1
                 self.log_event.set()
             if self.options.log_echo:
-                print( '%s' % text )
+                self.logfile.print( text )
         elif command == Event.CMD_RETURN_STRING:
             text= binary.decode( 'utf-8', 'ignore' )
             if self.options.net_echo:
@@ -484,18 +527,12 @@ class ConsoleAPI:
             'T2':   4,
         }
 
-    is_color= False
-
     def __init__( self, options ):
         self.options= options
         self.sock= None
         self.controller= Controller()
         self.logger= None
-        if self.options.color:
-            import os
-            os.system( 'color' )
-            ConsoleAPI.is_color= True
-            BackgroundLogger.is_color= True
+        self.logfile= LogFile( options )
 
     def __enter__( self ):
         return  self
@@ -510,15 +547,13 @@ class ConsoleAPI:
             self.logger= None
         if self.sock:
             self.sock.close()
+            self.sock= None
+        if self.logfile:
+            self.logfile.close()
+            self.logfile= None
 
-    @classmethod
     def print( self, *msg ):
-        if self.is_color:
-            print( '\x1b[44m', end='' )
-            print( *msg, end='' )
-            print( '\x1b[0m', flush=True )
-        else:
-            print( *msg, flush=True )
+        self.logfile.print_script( *msg )
 
     def connect( self ):
         self.print( 'waiting' )
@@ -535,7 +570,7 @@ class ConsoleAPI:
     def start_logger( self ):
         if not self.logger:
             self.print( 'start logger' )
-            self.logger= BackgroundLogger( self.options )
+            self.logger= BackgroundLogger( self.options, self.logfile )
             self.logger.start_server()
 
     def stop_logger( self ):
@@ -772,6 +807,11 @@ class OptionBase:
             setattr( self, name, float(argv[ai]) )
         return  ai
 
+    def apply( self, args ):
+        for key in args:
+            getattr( self,key )
+            setattr( self, key, args[key] )
+
 
 class Options( OptionBase ):
     def __init__( self, **args ):
@@ -785,9 +825,8 @@ class Options( OptionBase ):
         self.log_echo= True
         self.log_limit= 6000
         self.color= True
-        for key in args:
-            getattr( self,key )
-            setattr( self, key, args[key] )
+        self.log_file_name= None
+        self.apply( args )
 
 
 #------------------------------------------------------------------------------
