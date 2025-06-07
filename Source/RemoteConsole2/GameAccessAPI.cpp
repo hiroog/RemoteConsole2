@@ -89,7 +89,7 @@ void	FGameAccessAPI::CallbackRemoveWidget( UWidget* widget )
 	unsigned int	wcount= WidgetArray.Num();
 	for( unsigned int wi= 0 ; wi< wcount ; wi++ ){
 		if( WidgetArray[wi] == widget ){
-			WidgetArray.RemoveAtSwap( wi, 1, false );
+			WidgetArray.RemoveAtSwap( wi, 1, EAllowShrinking::No );
 			break;
 		}
 	}
